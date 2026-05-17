@@ -10,6 +10,12 @@ object ChangelogManager {
     fun getChangelog(): List<ChangelogItem> {
         return listOf(
             ChangelogItem(
+                version = "5.10-1928",
+                title = "",
+                summary = "- 优化日志页面和日志内容\n" +
+                        "- 修复焦点通知aod显示内容错误"
+            ),
+            ChangelogItem(
                 version = "5.9-1928",
                 title = "仅针对xposed功能的修复",
                 summary = "- 修复取色延迟的错误"

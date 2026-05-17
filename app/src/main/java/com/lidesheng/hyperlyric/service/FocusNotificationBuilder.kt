@@ -45,7 +45,7 @@ class FocusNotificationBuilder(
         }
 
         // 5. AOD / 状态栏
-        paramV2.put("aodTitle", uiState.title)
+        paramV2.put("aodTitle", uiState.notificationTitleLeft)
         paramV2.put("aodPic", "miui.focus.pic_album")
 
         root.put("param_v2", paramV2)
