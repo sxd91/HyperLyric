@@ -100,6 +100,7 @@ data class LogEntry(
     val source: String = "com.lidesheng.hyperlyric",
     val rawLog: String = ""
 ) {
+    var id: String = ""
     val displaySource: String
         get() = when {
             source == "com.lidesheng.hyperlyric" -> "HyperLyric"
@@ -354,7 +355,7 @@ fun LogPage() {
                             }
                         }
                     } else {
-                        items(filteredLogs, key = { "${it.timestamp}_${it.level}_${it.tag}_${it.message}" }) { entry ->
+                        items(filteredLogs, key = { it.id.ifEmpty { "${it.timestamp}_${it.level}_${it.tag}_${it.message}" } }) { entry ->
                             LogItem(entry = entry, copiedMsg = copiedMsg, snackbarHostState = snackbarHostState)
                         }
                     }
@@ -400,7 +401,7 @@ fun LogPage() {
                             } else if (filteredLogs.isEmpty()) {
                                 item { Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(id = R.string.no_logs_found), color = MiuixTheme.colorScheme.onSurfaceSecondary) } }
                             } else {
-                                items(filteredLogs, key = { "${it.timestamp}_${it.level}_${it.tag}_${it.message}" }) { entry -> LogItem(entry = entry, copiedMsg = copiedMsg, snackbarHostState = snackbarHostState) }
+                                items(filteredLogs, key = { it.id.ifEmpty { "${it.timestamp}_${it.level}_${it.tag}_${it.message}" } }) { entry -> LogItem(entry = entry, copiedMsg = copiedMsg, snackbarHostState = snackbarHostState) }
                             }
                         }
                         VerticalScrollBar(

@@ -147,7 +147,11 @@ object LogManager {
             }
             entries.add(LogEntry("NOW", "E", context.getString(R.string.tag_logger), msg, rawLog = msg))
         }
-        entries.sortedByDescending { it.timestamp }
+        val sortedList = entries.sortedByDescending { it.timestamp }
+        sortedList.forEachIndexed { index, entry ->
+            entry.id = "log_${index}_${entry.timestamp}"
+        }
+        sortedList
     }
 
     suspend fun collectAllLogs(context: Context): List<LogEntry> {
