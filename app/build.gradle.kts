@@ -13,7 +13,7 @@ android {
         applicationId = "com.lidesheng.hyperlyric"
         minSdk = 33
         targetSdk = 37
-        versionCode = 1928
+        versionCode = 1929
         versionName = "5.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

@@ -10,7 +10,7 @@ object ChangelogManager {
     fun getChangelog(): List<ChangelogItem> {
         return listOf(
             ChangelogItem(
-                version = "5.10-1928",
+                version = "5.9-1929",
                 title = "以后更新节奏放缓",
                 summary = "- 新增shizuku绕过焦点通知限制\n" +
                         "- 优化日志页面和日志内容\n" +
