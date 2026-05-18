@@ -248,6 +248,13 @@ object HookIslandLyric {
         val pR = if (isLeft) prefs.getInt(RootConstants.KEY_HOOK_ISLAND_LEFT_PADDING_RIGHT, RootConstants.DEFAULT_HOOK_ISLAND_LEFT_PADDING_RIGHT)
                  else prefs.getInt(RootConstants.KEY_HOOK_ISLAND_RIGHT_PADDING_RIGHT, RootConstants.DEFAULT_HOOK_ISLAND_RIGHT_PADDING_RIGHT)
 
+        if (maxWidthDp <= 0) {
+            val wrapperTag = tag + "_WRAPPER"
+            container.findViewWithTag<FrameLayout>(wrapperTag)?.visibility = View.GONE
+            targetView?.visibility = View.GONE
+            return
+        }
+
         if (mode in 1..9) {
             val wrapperTag = tag + "_WRAPPER"
             var wrapperView = container.findViewWithTag<FrameLayout>(wrapperTag)

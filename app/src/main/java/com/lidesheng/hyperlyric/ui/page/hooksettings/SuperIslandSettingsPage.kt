@@ -62,8 +62,8 @@ fun SuperIslandSettingsPage() {
     var leftPaddingRight by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_LEFT_PADDING_RIGHT, RootConstants.DEFAULT_HOOK_ISLAND_LEFT_PADDING_RIGHT)) }
     var rightPaddingLeft by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_RIGHT_PADDING_LEFT, RootConstants.DEFAULT_HOOK_ISLAND_RIGHT_PADDING_LEFT)) }
     var rightPaddingRight by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_RIGHT_PADDING_RIGHT, RootConstants.DEFAULT_HOOK_ISLAND_RIGHT_PADDING_RIGHT)) }
-    var leftContentWidth by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH, RootConstants.DEFAULT_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH)) }
-    var rightContentWidth by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH, RootConstants.DEFAULT_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH)) }
+    var leftContentWidth by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH, RootConstants.DEFAULT_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH).coerceIn(20, 100)) }
+    var rightContentWidth by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH, RootConstants.DEFAULT_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH).coerceIn(20, 100)) }
     var afterPauseBehavior by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE, RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE)) }
     var extractGlowColor by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_ISLAND_GLOW_EXTRACT_COLOR, RootConstants.DEFAULT_HOOK_ISLAND_GLOW_EXTRACT_COLOR)) }
 
@@ -118,8 +118,26 @@ fun SuperIslandSettingsPage() {
         }
     ) { innerPadding ->
         val lazyListState = rememberLazyListState()
-        NumberInputDialog(show = showLeftContentWidthDialog, title = stringResource(id = R.string.title_left_content_width), label = stringResource(id = R.string.label_content_width_range), initialValue = leftContentWidth, min = 0, max = 100, onDismiss = { showLeftContentWidthDialog = false }, onConfirm = { value -> leftContentWidth = value; saveConfig(RootConstants.KEY_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH, value) })
-        NumberInputDialog(show = showRightContentWidthDialog, title = stringResource(id = R.string.title_right_content_width), label = stringResource(id = R.string.label_content_width_range), initialValue = rightContentWidth, min = 0, max = 100, onDismiss = { showRightContentWidthDialog = false }, onConfirm = { value -> rightContentWidth = value; saveConfig(RootConstants.KEY_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH, value) })
+        NumberInputDialog(
+            show = showLeftContentWidthDialog, 
+            title = stringResource(id = R.string.title_left_content_width), 
+            label = stringResource(id = R.string.label_content_width_range), 
+            initialValue = leftContentWidth, 
+            min = 20, 
+            max = 100, 
+            onDismiss = { showLeftContentWidthDialog = false }, 
+            onConfirm = { value -> leftContentWidth = value; saveConfig(RootConstants.KEY_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH, value) }
+        )
+        NumberInputDialog(
+            show = showRightContentWidthDialog, 
+            title = stringResource(id = R.string.title_right_content_width), 
+            label = stringResource(id = R.string.label_content_width_range), 
+            initialValue = rightContentWidth, 
+            min = 20, 
+            max = 100, 
+            onDismiss = { showRightContentWidthDialog = false }, 
+            onConfirm = { value -> rightContentWidth = value; saveConfig(RootConstants.KEY_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH, value) }
+        )
         PaddingInputDialog(show = showLeftPaddingDialog, title = stringResource(id = R.string.title_left_padding), initialLeft = leftPaddingLeft, initialRight = leftPaddingRight, onDismiss = { showLeftPaddingDialog = false }, onConfirm = { l, r -> leftPaddingLeft = l; leftPaddingRight = r; saveConfig(RootConstants.KEY_HOOK_ISLAND_LEFT_PADDING_LEFT, l); saveConfig(RootConstants.KEY_HOOK_ISLAND_LEFT_PADDING_RIGHT, r) })
         PaddingInputDialog(show = showRightPaddingDialog, title = stringResource(id = R.string.title_right_padding), initialLeft = rightPaddingLeft, initialRight = rightPaddingRight, onDismiss = { showRightPaddingDialog = false }, onConfirm = { l, r -> rightPaddingLeft = l; rightPaddingRight = r; saveConfig(RootConstants.KEY_HOOK_ISLAND_RIGHT_PADDING_LEFT, l); saveConfig(RootConstants.KEY_HOOK_ISLAND_RIGHT_PADDING_RIGHT, r) })
 
@@ -146,13 +164,25 @@ fun SuperIslandSettingsPage() {
                                 title = stringResource(id = R.string.title_left_content_width), 
                                 endActions = { Text("$leftContentWidth", fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) }, 
                                 onClick = { showLeftContentWidthDialog = true }, 
-                                bottomAction = { Slider(value = leftContentWidth.toFloat(), onValueChange = { leftContentWidth = it.toInt(); saveConfig(RootConstants.KEY_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH, it.toInt()) }, valueRange = 0f..100f) }
+                                bottomAction = { 
+                                    Slider(
+                                        value = leftContentWidth.toFloat(), 
+                                        onValueChange = { leftContentWidth = it.toInt(); saveConfig(RootConstants.KEY_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH, it.toInt()) }, 
+                                        valueRange = 20f..100f
+                                    )
+                                }
                             )
                             ArrowPreference(
                                 title = stringResource(id = R.string.title_right_content_width), 
                                 endActions = { Text("$rightContentWidth", fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) }, 
                                 onClick = { showRightContentWidthDialog = true }, 
-                                bottomAction = { Slider(value = rightContentWidth.toFloat(), onValueChange = { rightContentWidth = it.toInt(); saveConfig(RootConstants.KEY_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH, it.toInt()) }, valueRange = 0f..100f) }
+                                bottomAction = { 
+                                    Slider(
+                                        value = rightContentWidth.toFloat(), 
+                                        onValueChange = { rightContentWidth = it.toInt(); saveConfig(RootConstants.KEY_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH, it.toInt()) }, 
+                                        valueRange = 20f..100f
+                                    )
+                                }
                             )
                             ArrowPreference(
                                 title = stringResource(id = R.string.title_left_padding), 

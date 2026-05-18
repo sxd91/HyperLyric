@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import com.lidesheng.hyperlyric.R
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
-import top.yukonga.miuix.kmp.basic.Slider
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.preference.ArrowPreference
@@ -90,14 +89,7 @@ fun LazyListScope.basicSections(
                                 fontSize = MiuixTheme.textStyles.body2.fontSize,
                                 color = MiuixTheme.colorScheme.onSurfaceVariantActions
                             ) },
-                        onClick = onFadingEdgeClick,
-                        bottomAction = {
-                            Slider(
-                                value = fadingEdge.toFloat(),
-                                onValueChange = { onFadingEdgeChange(it.toInt()) },
-                                valueRange = 0f..100f
-                            )
-                        }
+                        onClick = onFadingEdgeClick
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp)

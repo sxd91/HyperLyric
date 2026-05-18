@@ -11,8 +11,10 @@ object ChangelogManager {
         return listOf(
             ChangelogItem(
                 version = "5.10-1929",
-                title = "",
-                summary = "- 修复shizuku异常关闭引起的错误"
+                title = "食盐了，上个版本的shizuku操作不当会引起软件崩溃，得连夜赶工o_o ....",
+                summary = "- 修复shizuku异常关闭引起的错误\n" +
+                        "- 超级岛内容长度下限改至20\n" +
+                        "- 移除“羽化边缘长度”的滑块"
             ),
             ChangelogItem(
                 version = "5.9-1929",
