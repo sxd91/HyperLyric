@@ -15,11 +15,18 @@ import io.github.proify.lyricon.lyric.view.TimedLine
 import io.github.proify.lyricon.lyric.view.TitleSlot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 object LyriconDataBridge {
     private val aiTransScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    // 状态版本号，用于在异步恢复后校验数据是否已过时
+    private val versionCounter = java.util.concurrent.atomic.AtomicInteger(0)
+
+    // 当前执行中的 AI 翻译协程任务
+    private var activeAiTranslationJob: Job? = null
 
     @Volatile
     var currentSong: Song? = null
@@ -63,6 +70,10 @@ object LyriconDataBridge {
         currentSongName = song?.name
         currentLyric = null
 
+        // 每次切歌，自增版本号并取消上一次的翻译任务
+        val currentVersion = versionCounter.incrementAndGet()
+        activeAiTranslationJob?.cancel()
+        activeAiTranslationJob = null
 
         if (song != null) {
             val processor = SongPreprocessor(TitleSlot.NAME_ARTIST)
@@ -74,7 +85,7 @@ object LyriconDataBridge {
             if (prefs != null) {
                 val aiEnabled = prefs.getBoolean(RootConstants.KEY_HOOK_AI_TRANS_ENABLE, RootConstants.DEFAULT_HOOK_AI_TRANS_ENABLE)
                 if (aiEnabled) {
-                    startAiTranslation(song, prefs)
+                    startAiTranslation(song, prefs, currentVersion)
                 } else if (aiSetDisplayTranslation) {
                     // 仅当上一首歌的翻译行是 AI 加的，才复位
                     isDisplayTranslation = false
@@ -86,11 +97,17 @@ object LyriconDataBridge {
         }
     }
 
-    private fun startAiTranslation(song: Song, prefs: SharedPreferences) {
+    private fun startAiTranslation(song: Song, prefs: SharedPreferences, version: Int) {
         val configs = buildAiTranslationConfigs(prefs)
-        aiTransScope.launch {
+        activeAiTranslationJob = aiTransScope.launch {
             try {
                 val translatedSong = AITranslator.translateSongSync(song, configs)
+                
+                // 核心校验：如果当前运行的翻译版本号不是最新的全局版本号，说明已被切歌，直接废弃结果
+                if (version != versionCounter.get()) {
+                    return@launch
+                }
+
                 if (translatedSong !== song && translatedSong.lyrics != null) {
                     currentSong = translatedSong
                     val processor = SongPreprocessor(TitleSlot.NAME_ARTIST)
@@ -171,5 +188,10 @@ object LyriconDataBridge {
         isDisplayRoma = true
         aiSetDisplayTranslation = false
         timingNavigator = TimingNavigator(emptyArray())
+
+        // 清空状态时，递增版本号并取消仍在后台运行的协程
+        versionCounter.incrementAndGet()
+        activeAiTranslationJob?.cancel()
+        activeAiTranslationJob = null
     }
 }

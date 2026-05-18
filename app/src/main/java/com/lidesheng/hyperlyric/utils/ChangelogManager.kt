@@ -13,7 +13,9 @@ object ChangelogManager {
                 version = "5.10-1928",
                 title = "",
                 summary = "- 优化日志页面和日志内容\n" +
-                        "- 修复焦点通知aod显示内容错误"
+                        "- 修复焦点通知aod显示内容错误\n" +
+                        "- 优化bottomsheet页面样式\n" +
+                        "- 修复ai翻译引发的错误"
             ),
             ChangelogItem(
                 version = "5.9-1928",
