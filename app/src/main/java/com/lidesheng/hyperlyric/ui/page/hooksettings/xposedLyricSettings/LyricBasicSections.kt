@@ -18,6 +18,7 @@ import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 fun LazyListScope.basicSections(
+    lyricMode: Int,
     textSize: Int,
     onTextSizeClick: () -> Unit,
     textSizeRatio: Float,
@@ -164,33 +165,65 @@ fun LazyListScope.basicSections(
                         SwitchPreference(title = stringResource(id = R.string.title_stop_at_end), checked = marqueeStopEnd, onCheckedChange = onMarqueeStopEndChange)
                     }
                 }
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                SwitchPreference(
-                    title = stringResource(id = R.string.title_marquee_metadata_mode),
-                    summary = stringResource(id = R.string.summary_marquee_metadata_mode),
-                    checked = marqueeMetadataMode,
-                    onCheckedChange = onMarqueeMetadataModeChange
-                )
-                AnimatedVisibility(visible = marqueeMetadataMode) {
+                AnimatedVisibility(visible = lyricMode == 0) {
                     Column {
-                        ArrowPreference(
-                            title = stringResource(id = R.string.title_marquee_metadata_speed),
-                            endActions = { Text("$marqueeMetadataSpeed", fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) },
-                            onClick = onMarqueeMetadataSpeedClick
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp)
                         )
-                        ArrowPreference(
-                            title = stringResource(id = R.string.title_marquee_metadata_delay),
-                            endActions = { Text(stringResource(id = R.string.format_ms, marqueeMetadataDelay), fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) },
-                            onClick = onMarqueeMetadataDelayClick
+                        SwitchPreference(
+                            title = stringResource(id = R.string.title_marquee_metadata_mode),
+                            summary = stringResource(id = R.string.summary_marquee_metadata_mode),
+                            checked = marqueeMetadataMode,
+                            onCheckedChange = onMarqueeMetadataModeChange
                         )
-                        SwitchPreference(title = stringResource(id = R.string.title_marquee_metadata_infinite), checked = marqueeMetadataInfinite, onCheckedChange = onMarqueeMetadataInfiniteChange)
-                        ArrowPreference(
-                            title = stringResource(id = R.string.title_marquee_metadata_loop),
-                            endActions = { Text(stringResource(id = R.string.format_ms, marqueeMetadataLoopDelay), fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) },
-                            onClick = onMarqueeMetadataLoopClick
-                        )
+                        AnimatedVisibility(visible = marqueeMetadataMode) {
+                            Column {
+                                ArrowPreference(
+                                    title = stringResource(id = R.string.title_marquee_metadata_speed),
+                                    onClick = onMarqueeMetadataSpeedClick,
+                                    endActions = {
+                                        Text(
+                                            "$marqueeMetadataSpeed",
+                                            fontSize = MiuixTheme.textStyles.body2.fontSize,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantActions
+                                        )
+                                    }
+                                )
+                                ArrowPreference(
+                                    title = stringResource(id = R.string.title_marquee_metadata_delay),
+                                    onClick = onMarqueeMetadataDelayClick,
+                                    endActions = {
+                                        Text(
+                                            stringResource(
+                                                id = R.string.format_ms,
+                                                marqueeMetadataDelay
+                                            ),
+                                            fontSize = MiuixTheme.textStyles.body2.fontSize,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantActions
+                                        )
+                                    }
+                                )
+                                SwitchPreference(
+                                    title = stringResource(id = R.string.title_marquee_metadata_infinite),
+                                    checked = marqueeMetadataInfinite,
+                                    onCheckedChange = onMarqueeMetadataInfiniteChange
+                                )
+                                ArrowPreference(
+                                    title = stringResource(id = R.string.title_marquee_metadata_loop),
+                                    onClick = onMarqueeMetadataLoopClick,
+                                    endActions = {
+                                        Text(
+                                            stringResource(
+                                                id = R.string.format_ms,
+                                                marqueeMetadataLoopDelay
+                                            ),
+                                            fontSize = MiuixTheme.textStyles.body2.fontSize,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantActions
+                                        )
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }

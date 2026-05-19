@@ -10,6 +10,11 @@ object ChangelogManager {
     fun getChangelog(): List<ChangelogItem> {
         return listOf(
             ChangelogItem(
+                version = "6.0-1929",
+                title = "测试内容",
+                summary = "- 新增小米超级岛“分离歌词”歌词模式，选择“分离歌词”后重启系统界面，不允许自定义容器内容"
+            ),
+            ChangelogItem(
                 version = "5.10-1929",
                 title = "食盐了，上个版本的shizuku操作不当会引起软件崩溃，得连夜赶工o_o ....",
                 summary = "- 修复shizuku异常关闭引起的错误\n" +

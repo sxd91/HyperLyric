@@ -88,7 +88,7 @@
 
     <!-- ———————————————————————— HookSettingsPage ———————————————————————— -->
     <string name="lyric_mode_verbatim">Lyricon Verbatim Lyrics</string>
-    <string name="lyric_mode_separated">Separated Lyrics</string>
+    <string name="lyric_mode_separated">Lyricon Separated Lyrics</string>
     <string name="title_lyric_mode">Lyric Mode</string>
     <string name="title_custom_config">Custom Configuration</string>
     <string name="title_super_island">HyperIsland</string>

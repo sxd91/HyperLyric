@@ -13,6 +13,7 @@ fun LyricBasicTab(
     lazyListState: LazyListState,
     topAppBarScrollBehavior: ScrollBehavior,
     contentPadding: PaddingValues,
+    lyricMode: Int,
     textSize: Int,
     onTextSizeClick: () -> Unit,
     textSizeRatio: Float,
@@ -65,6 +66,7 @@ fun LyricBasicTab(
         contentPadding = contentPadding,
     ) {
         basicSections(
+            lyricMode = lyricMode,
             textSize = textSize,
             onTextSizeClick = onTextSizeClick,
             textSizeRatio = textSizeRatio,
