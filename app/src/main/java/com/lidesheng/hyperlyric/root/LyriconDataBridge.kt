@@ -106,8 +106,11 @@ object LyriconDataBridge {
         activeAiTranslationJob = aiTransScope.launch {
             try {
                 val ratio = song.calculateChineseRatio()
-                if (autoIgnoreChinese && ratio > 0.7f) {
-                    val percentage = String.format(java.util.Locale.US, "%.1f%%", ratio * 100)
+                val percentage = String.format(java.util.Locale.US, "%.1f%%", ratio * 100)
+                if (autoIgnoreChinese) {
+                    com.lidesheng.hyperlyric.root.utils.xLog("AITranslation : 歌曲 ${song.name}（中文占比 $percentage)")
+                }
+                if (autoIgnoreChinese && ratio > 0.5f) {
                     com.lidesheng.hyperlyric.root.utils.xLog("AITranslation : 歌曲 ${song.name}（中文占比 $percentage），已自动跳过AI翻译")
                     return@launch
                 }
@@ -215,11 +218,15 @@ object LyriconDataBridge {
     }
 
     private fun Char.isChineseHan(): Boolean {
-        val ub = Character.UnicodeBlock.of(this)
-        return ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS ||
-                ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS ||
-                ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A ||
-                ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B
+        return try {
+            Character.UnicodeScript.of(this.code) == Character.UnicodeScript.HAN
+        } catch (_: Exception) {
+            val ub = Character.UnicodeBlock.of(this)
+            ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS ||
+                    ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS ||
+                    ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A ||
+                    ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B
+        }
     }
 
     private fun Char.isPunctuation(): Boolean {
