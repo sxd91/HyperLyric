@@ -84,7 +84,7 @@
     <string name="title_backup">Backup</string>
     <string name="title_restore">Restore</string>
     <string name="title_debug_info">Debug Info</string>
-    <string name="title_view_logs">View Module Logs</string>
+    <string name="title_view_logs">View Logs</string>
 
     <!-- ———————————————————————— HookSettingsPage ———————————————————————— -->
     <string name="lyric_mode_verbatim">Lyricon Verbatim Lyrics</string>
@@ -330,7 +330,6 @@
 
     <string name="title_module_logs">Module Logs</string>
     <string name="title_app_logs">App Logs</string>
-    <string name="title_log_viewer">Log Viewer</string>
     <string name="title_log_level">Log Level</string>
     <string name="log_level_normal">Normal</string>
     <string name="log_level_verbose">Debug</string>
