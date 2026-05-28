@@ -21,7 +21,7 @@ import io.github.proify.lyricon.provider.ProviderInfo
 class LyriconSource : LyricSource {
 
     override val id = "lyricon"
-    override val displayName = "Lyricon (逐字歌词)"
+    override val displayName = "Lyricon"
 
     private var sink: LyricSink? = null
     private var app: Application? = null

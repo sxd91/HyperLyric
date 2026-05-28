@@ -1,5 +1,6 @@
 package com.lidesheng.hyperlyric.root
 
+import com.lidesheng.hyperlyric.lyric.source.SourceManager
 import com.lidesheng.hyperlyric.root.source.LyriconSource
 import com.lidesheng.hyperlyric.root.source.RootLyricSink
 import com.lidesheng.hyperlyric.root.source.SuperLyricSource
@@ -18,6 +19,9 @@ class HookEntry : XposedModule() {
         var activeMode = 0
         val lyriconSource = LyriconSource()
         val superLyricSource = SuperLyricSource()
+        var sourceManager: SourceManager? = null
+            private set
+
         @JvmStatic
         var instance: HookEntry? = null
             private set
@@ -36,7 +40,7 @@ class HookEntry : XposedModule() {
     override fun onModuleLoaded(param: ModuleLoadedParam) {
         super.onModuleLoaded(param)
         instance = this
-        com.lidesheng.hyperlyric.root.utils.HookLogger.module = this
+        HookLogger.module = this
         HookLogger.i("HookEntry","ModuleInit : 模块已加载")
     }
 
@@ -160,11 +164,18 @@ class HookEntry : XposedModule() {
                     val sink = RootLyricSink(renderer, entry.prefs)
 
                     lyriconSource.initialize(app, entry.prefs, activeMode)
+                    superLyricSource.initialize(app)
 
-                    val activeSource = superLyricSource
-                    activeSource.initialize(app)
-                    activeSource.start(sink)
-                    HookLogger.i("HookEntry", "ModuleInit : 歌词源 = ${activeSource.displayName}")
+                    sourceManager = SourceManager(
+                        sources = listOf(lyriconSource, superLyricSource),
+                        prefs = entry.prefs,
+                        sink = sink,
+                        prefKey = RootConstants.KEY_HOOK_LYRIC_SOURCE,
+                        defaultSourceId = RootConstants.DEFAULT_HOOK_LYRIC_SOURCE
+                    )
+                    sourceManager?.start()
+
+                    HookLogger.i("HookEntry", "ModuleInit : 歌词源 = ${sourceManager?.getActiveSource()?.displayName}")
                     HookLogger.i("HookEntry", "ModuleInit : 系统环境初始化完成")
                 } catch (e: Exception) {
                     HookLogger.e("HookEntry", "ModuleInit : 系统环境初始化失败", e)

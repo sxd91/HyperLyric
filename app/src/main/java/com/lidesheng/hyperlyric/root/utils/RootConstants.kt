@@ -5,6 +5,8 @@ object Constants {
     const val KEY_HOOK_ENABLE_SUPER_ISLAND = "key_hook_enable_super_island"
     const val KEY_HOOK_ENABLE_DYNAMIC_ISLAND = "key_hook_enable_dynamic_island"
     const val KEY_HOOK_LYRIC_MODE = "key_hook_lyric_mode"
+    const val KEY_HOOK_LYRIC_SOURCE = "key_hook_lyric_source"
+    const val DEFAULT_HOOK_LYRIC_SOURCE = "lyricon"
 
     const val KEY_HOOK_ISLAND_LEFT_ALBUM = "key_hook_island_left_album"
     const val KEY_HOOK_ISLAND_CONTENT_LEFT = "key_hook_island_content_left"

@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -104,6 +105,13 @@ private fun LazyListScope.hookSettingsSections() {
             stringResource(R.string.lyric_mode_verbatim),
             stringResource(R.string.lyric_mode_separated)
         )
+        var lyricSource by remember {
+            mutableStateOf(prefs.getString(RootConstants.KEY_HOOK_LYRIC_SOURCE, RootConstants.DEFAULT_HOOK_LYRIC_SOURCE) ?: "lyricon")
+        }
+        val sourceOptions = listOf(
+            stringResource(R.string.lyric_source_lyricon),
+            stringResource(R.string.lyric_source_superlyric)
+        )
         Card(modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth()) {
             OverlayDropdownPreference(
                 title = stringResource(R.string.title_lyric_mode),
@@ -113,6 +121,17 @@ private fun LazyListScope.hookSettingsSections() {
                     lyricMode = index
                     prefs.edit { putInt(RootConstants.KEY_HOOK_LYRIC_MODE, index) }
                     PrefsBridge.putInt(RootConstants.KEY_HOOK_LYRIC_MODE, index)
+                }
+            )
+            OverlayDropdownPreference(
+                title = stringResource(R.string.title_lyric_source),
+                items = sourceOptions,
+                selectedIndex = if (lyricSource == "superlyric") 1 else 0,
+                onSelectedIndexChange = { index ->
+                    val newSource = if (index == 1) "superlyric" else "lyricon"
+                    lyricSource = newSource
+                    prefs.edit { putString(RootConstants.KEY_HOOK_LYRIC_SOURCE, newSource) }
+                    PrefsBridge.putString(RootConstants.KEY_HOOK_LYRIC_SOURCE, newSource)
                 }
             )
         }

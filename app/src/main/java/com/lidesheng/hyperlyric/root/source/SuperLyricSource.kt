@@ -22,7 +22,7 @@ import io.github.proify.lyricon.lyric.model.RichLyricLine
 class SuperLyricSource : LyricSource {
 
     override val id = "superlyric"
-    override val displayName = "SuperLyric (逐行歌词)"
+    override val displayName = "SuperLyric"
 
     private var app: android.app.Application? = null
     private var sink: LyricSink? = null
@@ -71,7 +71,6 @@ class SuperLyricSource : LyricSource {
             override fun onStop(publisher: String, data: SuperLyricData) {
                 android.util.Log.d("SuperLyricSource", "★ onStop RAW: publisher=$publisher")
                 HookLogger.d(TAG, "onStop : 收到停止事件, publisher=$publisher")
-                sink.onPlaybackStateChanged(false)
                 stopPositionPolling()
             }
         }
