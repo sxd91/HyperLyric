@@ -21,6 +21,8 @@ object LicenseProvider {
             LicenseItem("Shizuku", "RikkaApps", "https://github.com/RikkaApps/Shizuku"),
             LicenseItem("Capsulyric", "FrancoGiudans", "https://github.com/FrancoGiudans/Capsulyric"),
             LicenseItem("InstallerX-Revived", "wxxsfxyzm", "https://github.com/wxxsfxyzm/InstallerX-Revived"),
+            LicenseItem("SuperLyric", "HChenX", "https://github.com/HChenX/SuperLyric"),
+            LicenseItem("SuperLyricApi", "HChenX", "https://github.com/HChenX/SuperLyricApi"),
 
             // 联网版特有
             LicenseItem("retrofit", "square", "https://github.com/square/retrofit"),

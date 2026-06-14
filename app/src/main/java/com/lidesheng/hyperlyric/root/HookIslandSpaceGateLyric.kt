@@ -328,8 +328,8 @@ object HookIslandSpaceGateLyric : IslandRenderer {
         view.displayTranslation = LyriconDataBridge.isDisplayTranslation && !disableAll
         view.displayRoma = LyriconDataBridge.isDisplayRoma && !disableAll && !translationOnly
 
-        // 强行使用模式 8 获取样式
-        val style = LyricStyleHelper.buildStyle(prefs, res, 8, null)
+        // 强行使用歌词模式获取样式
+        val style = LyricStyleHelper.buildStyle(prefs, res, 7, null)
         view.setStyle(style)
     }
 

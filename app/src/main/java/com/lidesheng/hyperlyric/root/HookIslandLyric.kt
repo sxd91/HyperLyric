@@ -209,21 +209,19 @@ object HookIslandLyric : IslandRenderer {
             return
         }
 
-        val lyriconSongName = LyriconDataBridge.currentSongName
         val targetPkg = LyriconDataBridge.activePackageName ?: pkgName
         val mediaInfo = MediaMetadataHelper.getMediaInfo(rootView.context, targetPkg, HookLogger)
-        
-        val metadataSongName = mediaInfo.title
-        val finalArtistName = mediaInfo.artist
-        val finalAlbumName = mediaInfo.album
+
+        val songName = mediaInfo.title
+        val artistName = mediaInfo.artist
+        val albumName = mediaInfo.album
         val albumBitmap = mediaInfo.albumArt
 
         val singleModeText = when(mode) {
-            1 -> metadataSongName
-            2 -> lyriconSongName ?: ""
-            3 -> finalArtistName
-            4 -> finalAlbumName
-            5 -> if (finalArtistName.isEmpty()) lyriconSongName ?: "" else "${lyriconSongName ?: ""} - $finalArtistName"
+            1 -> songName
+            2 -> artistName
+            3 -> albumName
+            4 -> "$songName - $artistName"
             else -> ""
         }
         val isLeft = parentName.contains("1")
@@ -241,7 +239,7 @@ object HookIslandLyric : IslandRenderer {
             return
         }
 
-        if (mode in 1..9) {
+        if (mode in 1..7) {
             val wrapperTag = tag + "_WRAPPER"
             var wrapperView = container.findViewWithTag<FrameLayout>(wrapperTag)
             
@@ -299,14 +297,14 @@ object HookIslandLyric : IslandRenderer {
             wrapperView.visibility = View.VISIBLE
             
             richView.line = when(mode) {
-                1, 2, 3, 4, 5 -> RichLyricLine(text = singleModeText, words = emptyList())
-                6 -> RichLyricLine(text = lyriconSongName, words = emptyList(), secondary = finalArtistName, secondaryWords = emptyList())
-                7 -> {
-                    val sec = if (finalAlbumName.isEmpty()) finalArtistName else "$finalArtistName - $finalAlbumName"
-                    RichLyricLine(text = lyriconSongName, words = emptyList(), secondary = sec, secondaryWords = emptyList())
+                1, 2, 3, 4 -> RichLyricLine(text = singleModeText, words = emptyList())
+                5 -> RichLyricLine(text = songName, words = emptyList(), secondary = artistName, secondaryWords = emptyList())
+                6 -> {
+                    val sec = if (albumName.isEmpty()) artistName else "$artistName - $albumName"
+                    RichLyricLine(text = songName, words = emptyList(), secondary = sec, secondaryWords = emptyList())
                 }
-                8 -> {
-                    var rawLine = LyriconDataBridge.currentLyricLine ?: RichLyricLine(text = lyriconSongName, words = emptyList())
+                7 -> {
+                    var rawLine = LyriconDataBridge.currentLyricLine ?: RichLyricLine(text = songName, words = emptyList())
                     if (TranslationHelper.isTranslationOnly(prefs)) {
                         rawLine = TranslationHelper.applyTranslationOnly(rawLine)
                     } else if (TranslationHelper.isSwapTranslation(prefs)) {
@@ -314,13 +312,12 @@ object HookIslandLyric : IslandRenderer {
                     }
                     rawLine
                 }
-                9 -> RichLyricLine(text = metadataSongName, words = emptyList(), secondary = finalArtistName, secondaryWords = emptyList())
                 else -> null
             }
             HookLogger.d("HookIslandLyric","HookIslandLyric : 注入完成: mode=$mode, 标题=${singleModeText.take(20)}, 歌词=${(LyriconDataBridge.currentLyric ?: "").take(20)}")
 
-            // mode 1~7 是歌曲信息，使用独立的跑马灯参数覆盖歌词默认值
-            if ((mode in 1..7 || mode == 9) && prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_METADATA_MODE, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_MODE)) {
+            // mode 1~6 是歌曲信息，使用独立的跑马灯参数覆盖歌词默认值
+            if (mode in 1..6 && prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_METADATA_MODE, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_MODE)) {
                 val mdSpeed = prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_METADATA_SPEED, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_SPEED).toFloat()
                 val mdDelay = prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_METADATA_DELAY, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_DELAY)
                 val mdLoopDelay = prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_METADATA_LOOP_DELAY, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_LOOP_DELAY)
@@ -353,7 +350,7 @@ object HookIslandLyric : IslandRenderer {
 
             // 如果开启了跑马灯，请求开始滚动
             richView.post {
-                val shouldMarquee = if (mode in 1..7 || mode == 9) {
+                val shouldMarquee = if (mode in 1..6) {
                     prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_METADATA_MODE, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_MODE)
                 } else {
                     prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_MODE, RootConstants.DEFAULT_HOOK_MARQUEE_MODE)
@@ -434,7 +431,7 @@ object HookIslandLyric : IslandRenderer {
     }
 
     private fun updateLyricInSlot(cv: ViewGroup, tag: String, mode: Int, prefs: SharedPreferences) {
-        if (mode != 8) return
+        if (mode != 7) return
         val view = cv.findViewWithTag<RichLyricLineView>(tag) ?: return
         val rawLine = LyriconDataBridge.currentLyricLine
         val targetLine = if (rawLine != null) {
