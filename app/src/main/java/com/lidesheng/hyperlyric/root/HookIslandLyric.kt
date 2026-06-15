@@ -30,7 +30,7 @@ object HookIslandLyric : IslandRenderer {
     var activeContentView: java.lang.ref.WeakReference<ViewGroup>? = null
     
     private val hookedClassLoaders = java.util.Collections.newSetFromMap(java.util.WeakHashMap<ClassLoader, Boolean>())
-    
+
     @Volatile
     private var isHookedSuccess = false
 
@@ -93,6 +93,7 @@ object HookIslandLyric : IslandRenderer {
             runCatching {
                 val islandView = chain.thisObject as? ViewGroup ?: return@runCatching
                 val prefs = (module as HookEntry).prefs
+                if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) return chain.proceed()
                 val pkgName = activeIslandPkgNames[islandView]
                 val activePkg = LyriconDataBridge.activePackageName
                 val behavior = prefs.getInt(RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE, RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE)
@@ -121,7 +122,9 @@ object HookIslandLyric : IslandRenderer {
             val result = chain.proceed()
             runCatching {
                 val viewGroup = chain.thisObject as? ViewGroup ?: return@runCatching
-                
+                val prefs = (module as HookEntry).prefs
+                if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) return result
+
                 val islandData = chain.args.getOrNull(0)
                 var pkgName = runCatching {
                     // 使用更加鲁棒的方法寻找 getExtras (无参且返回 Bundle)
@@ -139,7 +142,6 @@ object HookIslandLyric : IslandRenderer {
                 }
 
                 val activePkg = LyriconDataBridge.activePackageName
-                val prefs = (module as HookEntry).prefs
                 val behavior = prefs.getInt(RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE, RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE)
 
                 if (activePkg.isNullOrEmpty() || (!MediaMetadataHelper.isPackagePlaying(viewGroup.context, activePkg) && behavior == 0)) {
@@ -374,6 +376,7 @@ object HookIslandLyric : IslandRenderer {
     }
 
     override fun refreshActiveIsland() {
+        if ((module as? HookEntry)?.prefs?.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND) != true) return
         HookLogger.d("HookIslandLyric","正在刷新超级岛")
         val iterator = activeIslandPkgNames.entries.iterator()
         val activePkg = LyriconDataBridge.activePackageName ?: return
@@ -409,6 +412,7 @@ object HookIslandLyric : IslandRenderer {
     }
 
     override fun updateLyricLine() {
+        if ((module as? HookEntry)?.prefs?.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND) != true) return
         HookLogger.d("HookIslandLyric","正在更新歌词行")
         val iterator = activeIslandPkgNames.entries.iterator()
         val activePkg = LyriconDataBridge.activePackageName ?: return
@@ -476,6 +480,7 @@ object HookIslandLyric : IslandRenderer {
      * 播放进度同步到 RichLyricLineView，驱动逐字/逐音节高亮
      */
     override fun updatePosition(position: Long) {
+        if ((module as? HookEntry)?.prefs?.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND) != true) return
         val iterator = activeIslandPkgNames.entries.iterator()
         val activePkg = LyriconDataBridge.activePackageName ?: return
         
@@ -501,8 +506,12 @@ object HookIslandLyric : IslandRenderer {
      * 播放/暂停状态变化回调
      */
     override fun onPlaybackStateChanged(isPlaying: Boolean) {
-        HookLogger.d("HookIslandLyric","播放状态变更: isPlaying=$isPlaying")
         val prefs = (module as HookEntry).prefs
+        if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) {
+            activeIslandPkgNames.clear()
+            return
+        }
+        HookLogger.d("HookIslandLyric","播放状态变更: isPlaying=$isPlaying")
         val behavior = prefs.getInt(RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE, RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE)
 
         if (isPlaying) {

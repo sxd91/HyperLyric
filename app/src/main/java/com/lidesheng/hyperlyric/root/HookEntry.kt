@@ -135,6 +135,7 @@ class HookEntry : XposedModule() {
         override fun intercept(chain: Chain): Any? {
             val result = chain.proceed()
             val cl = chain.thisObject as? ClassLoader ?: return result
+            if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) return result
             try {
                 if (activeMode == 1) {
                     HookIslandSpaceGateLyric.hook(this@HookEntry, cl)

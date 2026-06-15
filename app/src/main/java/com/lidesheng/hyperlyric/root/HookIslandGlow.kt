@@ -63,6 +63,8 @@ object HookIslandGlow {
 
     private fun injectHighlightColor(chain: io.github.libxposed.api.XposedInterface.Chain) {
         runCatching {
+            if (prefs?.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND) != true) return
+
             val extractEnabled = prefs?.getBoolean(
                 RootConstants.KEY_HOOK_ISLAND_GLOW_EXTRACT_COLOR,
                 RootConstants.DEFAULT_HOOK_ISLAND_GLOW_EXTRACT_COLOR
