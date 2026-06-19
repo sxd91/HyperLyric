@@ -26,6 +26,7 @@ jobs:
           V_NAME=$(grep "versionName =" app/build.gradle.kts | sed 's/.*"\(.*\)".*/\1/')
           V_CODE=$(grep "versionCode =" app/build.gradle.kts | sed 's/[^0-9]//g')
           echo "name=$V_NAME" >> $GITHUB_OUTPUT
+          echo "code=$V_CODE" >> $GITHUB_OUTPUT
 
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$PREV_TAG" ]; then
@@ -134,7 +135,7 @@ jobs:
         if: github.event_name != 'pull_request' && steps.gate.outputs.skip == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.gate.outputs.name }}
+          tag_name: ${{ steps.gate.outputs.code }}-${{ steps.gate.outputs.name }}
           name: HyperLyric v${{ steps.gate.outputs.name }}
           body: ${{ steps.release_body.outputs.body }}
           draft: false
