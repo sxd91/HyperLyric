@@ -1,151 +1,198 @@
 package com.lidesheng.hyperlyric.root
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import android.content.SharedPreferences
+import android.graphics.Bitmap
 import android.view.View
+import com.lidesheng.hyperlyric.common.RootConstants
+import com.lidesheng.hyperlyric.common.media.MediaMetadataHelper
+import com.lidesheng.hyperlyric.root.island.IslandProbeUtils
 import com.lidesheng.hyperlyric.root.utils.CoverColorHelper
 import com.lidesheng.hyperlyric.root.utils.HookLogger
-import com.lidesheng.hyperlyric.common.RootConstants
 import io.github.libxposed.api.XposedModule
+import org.json.JSONObject
+import java.util.WeakHashMap
 
-/**
- * 超级岛胶囊边缘描边颜色注入
- *
- * 策略：Hook updateTemplate()，在系统解析完 IslandTemplate 后，
- * 将 highlightColor 设置为专辑封面主色。系统会在 updateMedianLuma /
- * updateDarkLightMode 中自动使用该颜色渲染描边。
- */
 @SuppressLint("DiscouragedPrivateApi", "PrivateApi")
 object HookIslandGlow {
+    private const val TAG = "HookIslandGlow"
     private const val BASE_CONTENT_VIEW_CLASS = "miui.systemui.dynamicisland.window.content.DynamicIslandBaseContentView"
     private const val DATA_CLASS = "com.android.systemui.plugins.miui.dynamicisland.DynamicIslandData"
 
     private lateinit var module: XposedModule
-    private var isHooked = false
+    private val hookedClassLoaders = java.util.Collections.synchronizedSet(
+        java.util.Collections.newSetFromMap(java.util.WeakHashMap<ClassLoader, Boolean>())
+    )
+    private val lastGlowEnabledByView = WeakHashMap<View, Boolean>()
 
     private val prefs: SharedPreferences?
         get() = if (::module.isInitialized) (module as? HookEntry)?.prefs else null
 
     fun init(xposedModule: XposedModule, cl: ClassLoader) {
-        if (isHooked) return
+        if (!hookedClassLoaders.add(cl)) return
         module = xposedModule
 
-        runCatching {
+        try {
             val baseContentViewClass = cl.loadClass(BASE_CONTENT_VIEW_CLASS)
-
-            // Hook updateTemplate — 注入 highlightColor
-            val dataClass = baseContentViewClass.classLoader?.loadClass(DATA_CLASS) ?: return@runCatching
-            val updateTemplateMethod = baseContentViewClass.declaredMethods.find { 
-                it.name == "updateTemplate" && it.parameterTypes.size == 1 && it.parameterTypes[0] == dataClass
+            val dataClass = baseContentViewClass.classLoader?.loadClass(DATA_CLASS) ?: return
+            val updateTemplateMethod = baseContentViewClass.declaredMethods.find {
+                it.name == "updateTemplate" &&
+                    it.parameterTypes.size == 1 &&
+                    it.parameterTypes[0] == dataClass
             }
 
             if (updateTemplateMethod != null) {
                 updateTemplateMethod.isAccessible = true
                 module.deoptimize(updateTemplateMethod)
                 module.hook(updateTemplateMethod).intercept { chain ->
-                    val result = chain.proceed()
-                    injectHighlightColor(chain)
-                    result
-                }
-                HookLogger.i("HookIslandGlow","超级岛外圈光效注入成功")
-            } else {
-                HookLogger.w("HookIslandGlow","未找到超级岛外圈光效注入位置")
-            }
-        }.onFailure { e ->
-            if (e !is ClassNotFoundException) {
-                HookLogger.e("HookIslandGlow", "超级岛外圈光效初始化失败", e)
-            }
-        }
-
-        isHooked = true
-    }
-
-    private fun injectHighlightColor(chain: io.github.libxposed.api.XposedInterface.Chain) {
-        runCatching {
-            if (prefs?.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND) != true) return
-
-            val extractEnabled = prefs?.getBoolean(
-                RootConstants.KEY_HOOK_ISLAND_GLOW_EXTRACT_COLOR,
-                RootConstants.DEFAULT_HOOK_ISLAND_GLOW_EXTRACT_COLOR
-            ) ?: false
-
-            if (!extractEnabled) return
-
-            val view = chain.thisObject as? View ?: return
-
-            // 校验：当前岛是否是正在播放的音乐 App
-            val pkgName = getPkgNameFromView(view)
-            if (pkgName.isEmpty() || pkgName != LyriconDataBridge.activePackageName) return
-
-            val colors = CoverColorHelper.getCachedColors()?.second
-            val mainColor = colors?.firstOrNull() ?: return
-
-            // 获取 template 字段
-            val templateField = findFieldInHierarchy(view.javaClass, "template") ?: return
-            val template = templateField.get(view) ?: return
-
-            // 设置 highlightColor
-            val setHlMethod = template.javaClass.methods.find { it.name == "setHighlightColor" && it.parameterTypes.size == 1 && it.parameterTypes[0] == String::class.java }
-            if (setHlMethod != null) {
-                val colorStr = String.format("#%08X", mainColor)
-                setHlMethod.invoke(template, colorStr)
-
-                // 同时更新 _highlightColor LiveData/StateFlow，触发系统渲染管线
-                val hlField = findFieldInHierarchy(view.javaClass, "_highlightColor")
-                if (hlField != null) {
-                    val hlLiveData = hlField.get(view)
-                    if (hlLiveData != null) {
-                        val setValueMethod = hlLiveData.javaClass.methods.find { it.name == "setValue" && it.parameterTypes.size == 1 }
-                        setValueMethod?.invoke(hlLiveData, colorStr)
+                    val view = chain.thisObject as? View
+                    val data = chain.args.getOrNull(0)
+                    val color = prepareHighlightColor(view, data)
+                    if (color != null) {
+                        injectTickerDataHighlightColor(data, color)
                     }
+                    chain.proceed()
                 }
+                HookLogger.i(TAG, "已 Hook DynamicIslandBaseContentView.updateTemplate，用于媒体岛光效")
+            } else {
+                HookLogger.w(TAG, "未找到 updateTemplate，跳过媒体岛光效 Hook")
             }
-        }.onFailure { e ->
-            HookLogger.e("HookIslandGlow", "颜色提取失败", e)
+        } catch (e: ClassNotFoundException) {
+            HookLogger.w(TAG, "跳过不支持的媒体岛光效 Hook: ${e.message}")
+        } catch (e: Exception) {
+            HookLogger.e(TAG, "初始化媒体岛光效 Hook 失败", e)
         }
     }
 
-    private fun getPkgNameFromView(view: View): String {
+    private fun prepareHighlightColor(view: View?, islandData: Any?): String? {
         return runCatching {
-            val dataField = findFieldInHierarchy(view.javaClass, "currentIslandData") ?: return ""
-            val islandData = dataField.get(view) ?: return ""
-            val getExtrasMethod = islandData.javaClass.methods.find { it.name == "getExtras" && it.parameterTypes.isEmpty() }
-            val extras = getExtrasMethod?.invoke(islandData) as? android.os.Bundle ?: return ""
-            extras.getString("miui.pkg.name") ?: ""
-        }.getOrDefault("")
-    }
-
-    private fun findFieldInHierarchy(clazz: Class<*>, fieldName: String): java.lang.reflect.Field? {
-        var c: Class<*>? = clazz
-        while (c != null && c != View::class.java) {
-            try {
-                val field = c.getDeclaredField(fieldName)
-                field.isAccessible = true
-                return field
-            } catch (_: NoSuchFieldException) {
-                c = c.superclass
+            val sharedPrefs = prefs ?: return@runCatching null
+            if (!sharedPrefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) {
+                return@runCatching null
             }
-        }
-        return null
+            if (!sharedPrefs.getBoolean(RootConstants.KEY_HOOK_ISLAND_GLOW_EXTRACT_COLOR, RootConstants.DEFAULT_HOOK_ISLAND_GLOW_EXTRACT_COLOR)) {
+                return@runCatching null
+            }
+
+            val mediaInfoFromIsland = IslandProbeUtils.extractMediaIslandInfo(islandData)
+                ?: return@runCatching null
+            val pkgName = mediaInfoFromIsland.packageName
+            val lyricPkg = LyriconDataBridge.currentLyricPackageName
+            if (pkgName.isEmpty() || lyricPkg.isNullOrEmpty() || pkgName != lyricPkg) {
+                return@runCatching null
+            }
+
+            val context = view?.context ?: return@runCatching null
+            val mediaInfo = MediaMetadataHelper.getMediaInfo(context, pkgName, HookLogger)
+            val albumArt = mediaInfo.albumArt ?: return@runCatching null
+            val songKey = "$pkgName:${mediaInfo.title}:${mediaInfo.artist}"
+            val color = CoverColorHelper.extractColors(albumArt, useGradient = false, songKey = songKey)
+                .second
+                .firstOrNull()
+                ?: return@runCatching null
+
+            String.format("#%08X", color)
+        }.onFailure { e ->
+            HookLogger.e(TAG, "解析媒体岛光效颜色失败", e)
+        }.getOrNull()
     }
 
-    /**
-     * 空桩，保持调用方兼容
-     */
+    private fun injectTickerDataHighlightColor(islandData: Any?, color: String) {
+        runCatching {
+            val receiver = islandData ?: return
+            val getTickerData = receiver.javaClass.methods.find {
+                it.name == "getTickerData" && it.parameterTypes.isEmpty()
+            } ?: return
+            val setTickerData = receiver.javaClass.methods.find {
+                it.name == "setTickerData" &&
+                    it.parameterTypes.size == 1 &&
+                    it.parameterTypes[0] == String::class.java
+            } ?: return
+
+            val tickerData = getTickerData.invoke(receiver) as? String ?: return
+            if (tickerData.isBlank()) return
+
+            val json = JSONObject(tickerData)
+            json.put("highlightColor", color)
+            setTickerData.invoke(receiver, json.toString())
+        }.onFailure { e ->
+            HookLogger.e(TAG, "向 tickerData 注入 highlightColor 失败", e)
+        }
+    }
+
     @Suppress("UNUSED_PARAMETER")
     fun injectAndTriggerGlow(contentView: View, islandData: Any?, sharedPrefs: SharedPreferences) {
-        // highlightColor 已通过 updateTemplate Hook 注入，系统自动处理
+        // Color is injected before updateTemplate parses tickerData.
     }
 
-    fun updateMusicGlow(albumArt: Bitmap?, sharedPrefs: SharedPreferences) {
+    fun updateMusicGlow(contentView: View?, @Suppress("UNUSED_PARAMETER") albumArt: Bitmap?, sharedPrefs: SharedPreferences) {
         val enabled = sharedPrefs.getBoolean(
             RootConstants.KEY_HOOK_ISLAND_GLOW_EXTRACT_COLOR,
             RootConstants.DEFAULT_HOOK_ISLAND_GLOW_EXTRACT_COLOR
         )
-        if (albumArt != null && enabled) {
-            CoverColorHelper.extractColors(albumArt, false)
+        if (!enabled) {
+            clearViewHighlightColor(contentView)
+            rememberGlowEnabled(contentView, false)
+            return
+        }
+        if (contentView != null && rememberGlowEnabled(contentView, true) != true) {
+            refreshTemplateForCurrentIsland(contentView)
         }
     }
-}
 
+    private fun rememberGlowEnabled(view: View?, enabled: Boolean): Boolean? {
+        view ?: return null
+        return synchronized(lastGlowEnabledByView) {
+            val previous = lastGlowEnabledByView[view]
+            lastGlowEnabledByView[view] = enabled
+            previous
+        }
+    }
+
+    private fun refreshTemplateForCurrentIsland(view: View) {
+        runCatching {
+            val islandData = IslandProbeUtils.getCurrentIslandData(view) ?: return
+            val updateTemplate = view.javaClass.methods.find {
+                it.name == "updateTemplate" && it.parameterTypes.size == 1
+            } ?: return
+            updateTemplate.invoke(view, islandData)
+        }.onFailure { e ->
+            HookLogger.e(TAG, "刷新媒体岛光效模板失败", e)
+        }
+    }
+
+    private fun clearViewHighlightColor(view: View?) {
+        runCatching {
+            view ?: return
+            val template = findFieldInHierarchy(view.javaClass, "template")?.get(view)
+            template?.javaClass?.methods
+                ?.find {
+                    it.name == "setHighlightColor" &&
+                        it.parameterTypes.size == 1 &&
+                        it.parameterTypes[0] == String::class.java
+                }
+                ?.invoke(template, null)
+
+            val highlightState = findFieldInHierarchy(view.javaClass, "_highlightColor")?.get(view)
+            highlightState?.javaClass?.methods
+                ?.find { it.name == "setValue" && it.parameterTypes.size == 1 }
+                ?.invoke(highlightState, null)
+        }.onFailure { e ->
+            HookLogger.e(TAG, "清除视图 highlightColor 失败", e)
+        }
+    }
+
+    private fun findFieldInHierarchy(clazz: Class<*>, fieldName: String): java.lang.reflect.Field? {
+        var current: Class<*>? = clazz
+        while (current != null && current != View::class.java) {
+            try {
+                val field = current.getDeclaredField(fieldName)
+                field.isAccessible = true
+                return field
+            } catch (_: NoSuchFieldException) {
+                current = current.superclass
+            }
+        }
+        return null
+    }
+}

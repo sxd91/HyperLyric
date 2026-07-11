@@ -1,6 +1,7 @@
 package com.lidesheng.hyperlyric.root.island.view
 
 import android.content.Context
+import android.view.View
 import android.widget.FrameLayout
 
 /**
@@ -13,6 +14,19 @@ class MaxWidthFrameLayout(context: Context) : FrameLayout(context) {
      * 最大宽度（像素）。设置为 -1（默认）则不限制。
      */
     var maxWidthPx: Int = -1
+
+    /**
+     * Used only by injected Super Island test blocks.
+     */
+    var keepVisible: Boolean = false
+
+    override fun setVisibility(visibility: Int) {
+        if (keepVisible && visibility != View.VISIBLE) {
+            super.setVisibility(View.VISIBLE)
+            return
+        }
+        super.setVisibility(visibility)
+    }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val givenWidth = MeasureSpec.getSize(widthMeasureSpec)

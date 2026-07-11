@@ -115,6 +115,7 @@ open class LyricLineView(context: Context, attrs: AttributeSet? = null) :
     private var ghostSpacing: Float = 40f.dp
     private var scrollStarted = false
     private var scrollUnlocked = false
+    private var playbackActive = true
 
     val textSize: Float get() = textPaint.textSize
 
@@ -196,12 +197,27 @@ open class LyricLineView(context: Context, attrs: AttributeSet? = null) :
     fun updatePosition(posMs: Long) {
         if (isWordSync) {
             if (syncRenderer.isScrollOnly && !isOverflow) return
-            activeRenderer.update(_model, lineState, posMs, measuredWidth, measuredHeight)
-            if (syncRenderer.isPlaying && !syncRenderer.isFinished) {
-                animator.startIfNeeded()
+            if (playbackActive) {
+                activeRenderer.update(_model, lineState, posMs, measuredWidth, measuredHeight)
+                if (syncRenderer.isPlaying && !syncRenderer.isFinished) {
+                    animator.startIfNeeded()
+                }
+            } else {
+                activeRenderer.seek(_model, lineState, posMs, measuredWidth, measuredHeight)
+                animator.stop()
+                invalidate()
             }
         } else {
             startScrolling()
+        }
+    }
+
+    fun setPlaybackActive(active: Boolean) {
+        playbackActive = active
+        if (!active) {
+            animator.stop()
+            (activeRenderer as? WordSyncRenderer)?.freeze(_model, lineState, measuredWidth)
+            invalidate()
         }
     }
 

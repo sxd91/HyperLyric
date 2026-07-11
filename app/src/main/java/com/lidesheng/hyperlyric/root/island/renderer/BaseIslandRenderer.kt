@@ -1,111 +1,246 @@
 package com.lidesheng.hyperlyric.root.island.renderer
 
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import com.lidesheng.hyperlyric.common.RootConstants
+import com.lidesheng.hyperlyric.common.media.MediaMetadataHelper
+import com.lidesheng.hyperlyric.lyric.view.RichLyricLineView
+import com.lidesheng.hyperlyric.lyric.view.SpaceGateRichLyricLineView
 import com.lidesheng.hyperlyric.root.HookEntry
 import com.lidesheng.hyperlyric.root.LyriconDataBridge
 import com.lidesheng.hyperlyric.root.island.IslandHostFacade
+import com.lidesheng.hyperlyric.root.island.IslandLyricTextInjector
+import com.lidesheng.hyperlyric.root.island.IslandProbeUtils
+import com.lidesheng.hyperlyric.root.island.IslandSlotContentAssembler
+import com.lidesheng.hyperlyric.root.island.IslandSlotRuntimeConfig
+import com.lidesheng.hyperlyric.root.island.IslandViewRegistry
 import com.lidesheng.hyperlyric.root.utils.HookLogger
-import io.github.libxposed.api.XposedInterface.Chain
-import io.github.libxposed.api.XposedModule
 
-/**
- * 超级岛渲染器的抽象基类。
- */
-abstract class BaseIslandRenderer(protected val logTag: String) : IslandRenderer {
-    lateinit var module: XposedModule
+object BaseIslandRenderer : IslandRenderer {
 
-    // 缓存所有激活了超级岛的 View 及其包名
-    val activeIslandPkgNames: MutableMap<View, String> = 
-        java.util.Collections.synchronizedMap(java.util.WeakHashMap<View, String>())
-        
-    // 缓存当前激活的 BigIsland 容器引用
-    var activeContentView: java.lang.ref.WeakReference<ViewGroup>? = null
+    private const val REFRESH_DEBOUNCE_MS = 32L
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val refreshRunnable = Runnable { performRefreshActiveIsland() }
 
-    override fun clearAllViews() {
-        val iterator = activeIslandPkgNames.entries.iterator()
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            val cv = entry.key as? ViewGroup
-            if (cv != null && cv.isAttachedToWindow) {
-                cv.post {
-                    IslandHostFacade.clearAndRefresh(cv)
-                }
-            } else {
-                iterator.remove()
-            }
+    @Volatile
+    private var playbackActive = true
+
+    @Volatile
+    private var clearedByPause = false
+
+    fun shouldRenderInjectedIsland(): Boolean {
+        val prefs = HookEntry.instance?.prefs ?: return false
+        if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) {
+            return false
         }
+        val behavior = prefs.getInt(
+            RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE,
+            RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE
+        )
+        return playbackActive || behavior != 0
     }
 
-    override fun onPlaybackStateChanged(isPlaying: Boolean) {
-        val prefs = (module as HookEntry).prefs
+    fun shouldRenderInjectedIsland(context: Context, packageName: String): Boolean {
+        val prefs = HookEntry.instance?.prefs ?: return false
         if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) {
-            activeIslandPkgNames.clear()
+            return false
+        }
+        val behavior = prefs.getInt(
+            RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE,
+            RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE
+        )
+        if (behavior != 0) {
+            return true
+        }
+        return MediaMetadataHelper.isPackagePlaying(context, packageName)
+    }
+
+    override fun refreshActiveIsland() {
+        mainHandler.removeCallbacks(refreshRunnable)
+        mainHandler.postDelayed(refreshRunnable, REFRESH_DEBOUNCE_MS)
+    }
+
+    private fun performRefreshActiveIsland() {
+        val prefs = HookEntry.instance?.prefs ?: return
+        if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) {
+            clearAllViews()
             return
         }
-        HookLogger.d(logTag, "播放状态变更: isPlaying=$isPlaying")
-        val behavior = prefs.getInt(RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE, RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE)
+        if (!shouldRenderInjectedIsland()) {
+            clearActiveViewsForPause()
+            return
+        }
 
-        if (isPlaying) {
-            val activePkg = LyriconDataBridge.activePackageName
-            val hasInjection = activePkg != null && activeIslandPkgNames.values.any { it == activePkg }
-            if (hasInjection) {
-                updateLyricLine()
-            } else {
-                refreshActiveIsland()
-            }
-        } else {
-            when (behavior) {
-                0 -> {
-                    val iterator = activeIslandPkgNames.entries.iterator()
-                    while (iterator.hasNext()) {
-                        val entry = iterator.next()
-                        val cv = entry.key as? ViewGroup
-                        if (cv != null && cv.isAttachedToWindow) {
-                            cv.post {
-                                IslandHostFacade.clearAndRefresh(cv)
-                            }
-                        } else {
-                            iterator.remove()
-                        }
-                    }
+        val lyricPkg = LyriconDataBridge.currentLyricPackageName?.takeIf { it.isNotEmpty() } ?: return
+
+        IslandSlotContentAssembler.invalidate()
+
+        val activeViews = IslandViewRegistry.snapshotAttached(lyricPkg)
+        val config = IslandSlotRuntimeConfig.from(prefs)
+        activeViews.forEach { (cv, _) ->
+            cv.post {
+                if (IslandLyricTextInjector.injectSlots(cv)) {
+                    IslandHostFacade.triggerSystemRelayout(cv)
+                } else {
+                    IslandHostFacade.applyHostSettings(cv, prefs)
                 }
-                1 -> {
-                    // 保持现状，不做处理
-                }
+                updateContentForView(cv, lyricPkg, prefs, config)
             }
         }
+
+        HookLogger.d("BaseIslandRenderer", "已刷新活动媒体岛: 数量=${activeViews.size}")
+    }
+
+    override fun updateLyricLine() {
+        if ((HookEntry.instance?.prefs?.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) != true) return
+        if (!shouldRenderInjectedIsland()) return
+        val lyricPkg = LyriconDataBridge.currentLyricPackageName
+        if (lyricPkg.isNullOrEmpty()) return
+
+        val prefs = HookEntry.instance?.prefs ?: return
+        val config = IslandSlotRuntimeConfig.from(prefs)
+
+        IslandViewRegistry.snapshotAttached(lyricPkg)
+            .forEach { (cv, pkgName) ->
+                cv.post {
+                    updateContentForView(cv, pkgName, prefs, config)
+                }
+            }
     }
 
     override fun updatePosition(position: Long) {
-        if ((module as? HookEntry)?.prefs?.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND) != true) return
-        val iterator = activeIslandPkgNames.entries.iterator()
-        val activePkg = LyriconDataBridge.activePackageName ?: return
+        if ((HookEntry.instance?.prefs?.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) != true) return
+        if (!shouldRenderInjectedIsland()) return
+        val lyricPkg = LyriconDataBridge.currentLyricPackageName ?: return
 
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            val cv = entry.key as? ViewGroup
-            val pkgName = entry.value
-
-            if (cv != null && cv.isAttachedToWindow) {
-                if (pkgName == activePkg) {
-                    cv.post {
-                        setPositionOnViews(cv, position)
-                    }
+        IslandViewRegistry.snapshotAttached(lyricPkg)
+            .forEach { (cv, _) ->
+                cv.post {
+                    val leftView = cv.findViewWithTag<View>(IslandProbeUtils.LEFT_TEST_VIEW_TAG)
+                    val rightView = cv.findViewWithTag<View>(IslandProbeUtils.RIGHT_TEST_VIEW_TAG)
+                    (leftView as? RichLyricLineView)?.setPosition(position)
+                        ?: (leftView as? SpaceGateRichLyricLineView)?.setPosition(position)
+                    (rightView as? RichLyricLineView)?.setPosition(position)
+                        ?: (rightView as? SpaceGateRichLyricLineView)?.setPosition(position)
                 }
-            } else {
-                iterator.remove()
             }
+    }
+
+    override fun onPlaybackStateChanged(isPlaying: Boolean) {
+        val prefs = HookEntry.instance?.prefs ?: return
+        if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) {
+            clearAllViews()
+            return
+        }
+        playbackActive = isPlaying
+        HookLogger.d("BaseIslandRenderer", "播放状态变化: 正在播放=$isPlaying")
+        val behavior = prefs.getInt(
+            RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE,
+            RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE
+        )
+
+        if (isPlaying) {
+            if (clearedByPause) {
+                clearedByPause = false
+                refreshActiveIsland()
+            } else {
+                applyPlaybackStateToActiveViews(true)
+            }
+                HookLogger.d("BaseIslandRenderer", "播放已继续，等待进度或歌词事件")
+        } else if (behavior == 0) {
+            clearActiveViewsForPause()
+                HookLogger.d("BaseIslandRenderer", "已暂停，恢复原生媒体岛")
+        } else {
+            applyPlaybackStateToActiveViews(false)
+                HookLogger.d("BaseIslandRenderer", "已暂停，保留当前歌词注入")
         }
     }
 
-    /**
-     * 子类重写以更新特定类型的 RichLyricLineView 的播放进度。
-     */
-    protected abstract fun setPositionOnViews(cv: ViewGroup, position: Long)
+    private fun clearActiveViewsForPause() {
+        val lyricPkg = LyriconDataBridge.currentLyricPackageName
+        IslandViewRegistry.snapshotAttached()
+            .filter { (_, pkgName) -> lyricPkg == null || pkgName == lyricPkg }
+            .forEach { (cv, _) ->
+                cv.post {
+                    IslandHostFacade.clearAndRefresh(cv)
+                }
+            }
+        clearedByPause = true
+    }
 
-    // Xposed 事件拦截由具体的子类重写实现
-    abstract override fun onPreInject(chain: Chain): Any?
-    abstract override fun onUpdateBigIsland(chain: Chain): Any?
+    private fun applyPlaybackStateToActiveViews(isPlaying: Boolean) {
+        val lyricPkg = LyriconDataBridge.currentLyricPackageName
+        IslandViewRegistry.snapshotAttached()
+            .forEach { (cv, pkgName) ->
+                if (lyricPkg == null || pkgName == lyricPkg) {
+                    cv.post {
+                        setPlaybackActive(cv.findViewWithTag(IslandProbeUtils.LEFT_TEST_VIEW_TAG), isPlaying)
+                        setPlaybackActive(cv.findViewWithTag(IslandProbeUtils.RIGHT_TEST_VIEW_TAG), isPlaying)
+                    }
+                }
+            }
+    }
+
+    private fun setPlaybackActive(view: View?, isPlaying: Boolean) {
+        when (view) {
+            is RichLyricLineView -> view.setPlaybackActive(isPlaying)
+            is SpaceGateRichLyricLineView -> view.setPlaybackActive(isPlaying)
+        }
+    }
+
+    override fun clearAllViews() {
+        mainHandler.removeCallbacks(refreshRunnable)
+        IslandViewRegistry.snapshotAttached()
+            .forEach { (cv, _) ->
+                cv.post {
+                    IslandHostFacade.clearAndRefresh(cv)
+                }
+            }
+    }
+
+    private fun updateContentForView(
+        cv: ViewGroup,
+        packageName: String,
+        prefs: android.content.SharedPreferences,
+        config: IslandSlotRuntimeConfig
+    ) {
+        val mediaInfo = MediaMetadataHelper.getMediaInfo(cv.context, packageName, HookLogger)
+        IslandHostFacade.updateHostGlow(cv, mediaInfo.albumArt, prefs)
+        updateSlot(cv, IslandProbeUtils.LEFT_TEST_VIEW_TAG, config.leftMode, prefs, config, mediaInfo)
+        updateSlot(cv, IslandProbeUtils.RIGHT_TEST_VIEW_TAG, config.rightMode, prefs, config, mediaInfo)
+    }
+
+    private fun updateSlot(
+        cv: ViewGroup,
+        tag: String,
+        mode: Int,
+        prefs: android.content.SharedPreferences,
+        config: IslandSlotRuntimeConfig,
+        mediaInfo: MediaMetadataHelper.MediaInfo
+    ) {
+        if (mode == 0) return
+        val view = cv.findViewWithTag<View>(tag) ?: return
+        val lineOverride = if (mode == 7) {
+            IslandSlotContentAssembler.buildSlotLyricLine(
+                view = view,
+                prefs = prefs,
+                config = config,
+                isLeft = tag == IslandProbeUtils.LEFT_TEST_VIEW_TAG
+            )
+        } else {
+            null
+        }
+        IslandSlotContentAssembler.applySlotContent(
+            view = view,
+            prefs = prefs,
+            config = config,
+            mode = mode,
+            lineOverride = lineOverride,
+            playbackActive = playbackActive,
+            mediaInfo = mediaInfo
+        )
+    }
 }

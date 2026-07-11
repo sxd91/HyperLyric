@@ -1,7 +1,6 @@
 package com.lidesheng.hyperlyric.ui.page.hooksettings
 
 import android.content.Context
-import com.lidesheng.hyperlyric.root.bridge.LyriconBridge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -139,42 +138,6 @@ fun LyricSettingsPage() {
                 is Boolean -> PrefsBridge.putBoolean(key, value)
                 is Float -> PrefsBridge.putFloat(key, value)
                 is String -> PrefsBridge.putString(key, value)
-            }
-            val refreshKeys = setOf(
-                RootConstants.KEY_HOOK_TEXT_SIZE,
-                RootConstants.KEY_HOOK_FONT_WEIGHT,
-                RootConstants.KEY_HOOK_FONT_ITALIC,
-                RootConstants.KEY_HOOK_FADING_EDGE_LENGTH,
-                RootConstants.KEY_HOOK_TEXT_SIZE_RATIO,
-                RootConstants.KEY_HOOK_GRADIENT_PROGRESS,
-                RootConstants.KEY_HOOK_MARQUEE_MODE,
-                RootConstants.KEY_HOOK_MARQUEE_SPEED,
-                RootConstants.KEY_HOOK_MARQUEE_DELAY,
-                RootConstants.KEY_HOOK_MARQUEE_LOOP_DELAY,
-                RootConstants.KEY_HOOK_MARQUEE_INFINITE,
-                RootConstants.KEY_HOOK_MARQUEE_STOP_END,
-                RootConstants.KEY_HOOK_MARQUEE_METADATA_SPEED,
-                RootConstants.KEY_HOOK_MARQUEE_METADATA_MODE,
-                RootConstants.KEY_HOOK_MARQUEE_METADATA_DELAY,
-                RootConstants.KEY_HOOK_MARQUEE_METADATA_LOOP_DELAY,
-                RootConstants.KEY_HOOK_MARQUEE_METADATA_INFINITE,
-                RootConstants.KEY_HOOK_SYLLABLE_RELATIVE,
-                RootConstants.KEY_HOOK_SYLLABLE_HIGHLIGHT,
-                RootConstants.KEY_HOOK_DISABLE_TRANSLATION,
-                RootConstants.KEY_HOOK_TRANSLATION_ONLY,
-                RootConstants.KEY_HOOK_SWAP_TRANSLATION,
-                RootConstants.KEY_HOOK_EXTRACT_COVER_TEXT_COLOR,
-                RootConstants.KEY_HOOK_EXTRACT_COVER_TEXT_GRADIENT,
-                RootConstants.KEY_HOOK_CUSTOM_FONT_PATH,
-                RootConstants.KEY_HOOK_CENTER_LYRIC,
-                RootConstants.KEY_HOOK_WORD_MOTION_ENABLED,
-                RootConstants.KEY_HOOK_WORD_MOTION_CJK_LIFT,
-                RootConstants.KEY_HOOK_WORD_MOTION_CJK_WAVE,
-                RootConstants.KEY_HOOK_WORD_MOTION_LATIN_LIFT,
-                RootConstants.KEY_HOOK_WORD_MOTION_LATIN_WAVE
-            )
-            if (key in refreshKeys) {
-                LyriconBridge.with(context).key("com.lidesheng.hyperlyric.UPDATE_LYRIC_ANIM").to("com.android.systemui").send()
             }
         }
     }

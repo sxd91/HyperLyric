@@ -111,7 +111,7 @@ internal class WordSyncRenderer(private val view: LyricLineView) : LineRenderer 
         viewWidth: Int,
         viewHeight: Int
     ) {
-        val target = targetWidth(posMs, model)
+        val target = exactTargetWidth(posMs, model)
         progressAnimator.jumpTo(target)
         updateScrollState(model, state, viewWidth)
         lastPosition = posMs
@@ -131,13 +131,13 @@ internal class WordSyncRenderer(private val view: LyricLineView) : LineRenderer 
         }
 
         val word = model.wordTimingNavigator.first(posMs)
-        val target = targetWidth(posMs, model, word)
+        val target = animationTargetWidth(posMs, model, word)
 
         if (word != null && progressAnimator.currentWidth == 0f) {
-            word.previous?.let { progressAnimator.jumpTo(it.endPosition) }
+            progressAnimator.jumpTo(exactTargetWidth(posMs, model, word))
         }
         if (target != progressAnimator.targetWidth) {
-            progressAnimator.animateTo(target, word?.duration ?: 0)
+            progressAnimator.animateTo(target, remainingDuration(posMs, word))
         }
         lastPosition = posMs
     }
@@ -180,6 +180,12 @@ internal class WordSyncRenderer(private val view: LyricLineView) : LineRenderer 
         textDrawer.clearShaderCache()
     }
 
+    fun freeze(model: LyricModel, state: LineState, viewWidth: Int) {
+        progressAnimator.stopAtCurrent()
+        updateScrollState(model, state, viewWidth)
+        notifyProgress(model)
+    }
+
     private fun updateScrollState(model: LyricModel, state: LineState, viewWidth: Int) {
         val offset = scrollStepper.compute(
             progressAnimator.currentWidth, model.width,
@@ -191,7 +197,17 @@ internal class WordSyncRenderer(private val view: LyricLineView) : LineRenderer 
         }
     }
 
-    private fun targetWidth(posMs: Long, model: LyricModel, word: WordModel? = null): Float {
+    private fun exactTargetWidth(posMs: Long, model: LyricModel, word: WordModel? = null): Float {
+        val w = word ?: model.wordTimingNavigator.first(posMs)
+        return when {
+            w != null -> interpolateWordWidth(posMs, w)
+            posMs >= model.end -> model.width
+            posMs <= model.begin -> 0f
+            else -> progressAnimator.currentWidth
+        }
+    }
+
+    private fun animationTargetWidth(posMs: Long, model: LyricModel, word: WordModel? = null): Float {
         val w = word ?: model.wordTimingNavigator.first(posMs)
         return when {
             w != null -> w.endPosition
@@ -199,6 +215,18 @@ internal class WordSyncRenderer(private val view: LyricLineView) : LineRenderer 
             posMs <= model.begin -> 0f
             else -> progressAnimator.currentWidth
         }
+    }
+
+    private fun interpolateWordWidth(posMs: Long, word: WordModel): Float {
+        val duration = (word.end - word.begin).takeIf { it > 0 } ?: word.duration
+        if (duration <= 0L) return word.endPosition
+        val progress = ((posMs - word.begin).toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+        return word.startPosition + (word.endPosition - word.startPosition) * progress
+    }
+
+    private fun remainingDuration(posMs: Long, word: WordModel?): Long {
+        val w = word ?: return 0L
+        return (w.end - posMs).coerceAtLeast(0L)
     }
 
     private fun notifyProgress(model: LyricModel) {

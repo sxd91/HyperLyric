@@ -3,7 +3,9 @@ package com.lidesheng.hyperlyric.root.island
 import android.annotation.SuppressLint
 import android.view.View
 import android.view.ViewGroup
+import com.lidesheng.hyperlyric.root.island.view.MaxWidthFrameLayout
 import com.lidesheng.hyperlyric.root.utils.HookLogger
+import java.util.WeakHashMap
 
 /**
  * 小米超级岛视图管理
@@ -12,6 +14,7 @@ import com.lidesheng.hyperlyric.root.utils.HookLogger
 object IslandViewHelper {
 
     private val SYSTEMUI_PKG_NAMES = arrayOf("miui.systemui.plugin", "com.android.systemui")
+    private val originalMargins = WeakHashMap<View, MarginSnapshot>()
 
     /**
      * 切换超级岛内部容器（如图标、文本容器）的可见性
@@ -52,6 +55,9 @@ object IslandViewHelper {
                         if (textContainer != null) {
                             val lp = textContainer.layoutParams as? ViewGroup.MarginLayoutParams
                             if (lp != null) {
+                                originalMargins.getOrPut(textContainer) {
+                                    MarginSnapshot(lp.marginStart, lp.marginEnd)
+                                }
                                 if (clearStart) lp.marginStart = 0
                                 if (clearEnd) lp.marginEnd = 0
                                 textContainer.layoutParams = lp
@@ -69,17 +75,27 @@ object IslandViewHelper {
      * 清理所有注入的视图并恢复系统原生组件
      */
     fun clearInjectedViews(rootView: ViewGroup) {
-        rootView.findViewWithTag<View>("HYPERLYRIC_LEFT_VIEW")?.visibility = View.GONE
-        rootView.findViewWithTag<View>("HYPERLYRIC_LEFT_VIEW_WRAPPER")?.visibility = View.GONE
-        rootView.findViewWithTag<View>("HYPERLYRIC_RIGHT_VIEW")?.visibility = View.GONE
-        rootView.findViewWithTag<View>("HYPERLYRIC_RIGHT_VIEW_WRAPPER")?.visibility = View.GONE
+        hideInjectedView(rootView, IslandProbeUtils.LEFT_TEST_VIEW_TAG)
+        hideInjectedView(rootView, IslandProbeUtils.LEFT_TEST_WRAPPER_TAG)
+        hideInjectedView(rootView, IslandProbeUtils.RIGHT_TEST_VIEW_TAG)
+        hideInjectedView(rootView, IslandProbeUtils.RIGHT_TEST_WRAPPER_TAG)
+        hideInjectedView(rootView, "HYPERLYRIC_TEST_VIEW_WRAPPER_LEFT")
+        hideInjectedView(rootView, "HYPERLYRIC_TEST_VIEW_WRAPPER_RIGHT")
  
         // 恢复系统原有组件的可见性
         toggleContainer(rootView, "island_container_module_image_text_1", "island_container_module_icon", true)
         toggleContainer(rootView, "island_container_module_image_text_2", "island_container_module_icon", true)
 
+        restoreTextContainerMargins(rootView, "island_container_module_image_text_1")
+        restoreTextContainerMargins(rootView, "island_container_module_image_text_2")
         showOriginalTexts(rootView, "island_container_module_image_text_1")
         showOriginalTexts(rootView, "island_container_module_image_text_2")
+    }
+
+    private fun hideInjectedView(rootView: ViewGroup, tag: String) {
+        val view = rootView.findViewWithTag<View>(tag) ?: return
+        (view as? MaxWidthFrameLayout)?.keepVisible = false
+        view.visibility = View.GONE
     }
 
     /**
@@ -143,4 +159,21 @@ object IslandViewHelper {
         }
         return null
     }
+
+    private fun restoreTextContainerMargins(rootView: ViewGroup, parentName: String) {
+        val parent = findViewByName(rootView, parentName) as? ViewGroup ?: return
+        val container = findViewByName(parent, "island_container_module_text") ?: return
+        val snapshot = originalMargins[container] ?: return
+        val lp = container.layoutParams as? ViewGroup.MarginLayoutParams ?: return
+        if (lp.marginStart != snapshot.marginStart || lp.marginEnd != snapshot.marginEnd) {
+            lp.marginStart = snapshot.marginStart
+            lp.marginEnd = snapshot.marginEnd
+            container.layoutParams = lp
+        }
+    }
+
+    private data class MarginSnapshot(
+        val marginStart: Int,
+        val marginEnd: Int
+    )
 }

@@ -1,10 +1,15 @@
 package com.lidesheng.hyperlyric.root.source
 
 import android.content.SharedPreferences
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import com.lidesheng.hyperlyric.lyric.source.LyricSink
 import com.lidesheng.hyperlyric.root.LyriconDataBridge
+import com.lidesheng.hyperlyric.root.island.IslandSlotContentAssembler
 import com.lidesheng.hyperlyric.root.island.renderer.IslandRenderer
 import com.lidesheng.hyperlyric.root.aitrans.AITranslator
+import com.lidesheng.hyperlyric.root.utils.CoverColorHelper
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import com.lidesheng.hyperlyric.common.RootConstants
 import com.lidesheng.hyperlyric.lyric.model.Song
@@ -18,18 +23,21 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class RootLyricSink(
-    @Volatile
-    private var renderer: IslandRenderer,
+    private val renderer: IslandRenderer,
     private val prefs: SharedPreferences? = null
 ) : LyricSink {
-
-    fun updateRenderer(newRenderer: IslandRenderer) {
-        this.renderer = newRenderer
-    }
 
     private val aiTransScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var activeAiTranslationJob: Job? = null
     private var aiSetDisplayTranslation: Boolean = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var lastPositionDispatchTimeMs = 0L
+    private var pendingPosition: Long? = null
+    private var positionDispatchScheduled = false
+
+    private companion object {
+        const val MIN_POSITION_DISPATCH_INTERVAL_MS = 33L
+    }
 
     override fun onSongChanged(song: Any?) {
 
@@ -68,15 +76,20 @@ class RootLyricSink(
         activeAiTranslationJob?.cancel()
         activeAiTranslationJob = null
         aiSetDisplayTranslation = false
+        pendingPosition = null
+        positionDispatchScheduled = false
+        renderer.clearAllViews()
         LyriconDataBridge.clearState()
-        renderer.refreshActiveIsland()
     }
 
     override fun onMetadata(title: String?, artist: String?, album: String?, publisher: String?) {
         if (title != null) LyriconDataBridge.currentSongName = title
         if (!publisher.isNullOrEmpty()) {
-            LyriconDataBridge.activePackageName = publisher
+            LyriconDataBridge.updateLyricPackage(publisher)
         }
+        CoverColorHelper.clearCache()
+        IslandSlotContentAssembler.invalidate()
+        renderer.refreshActiveIsland()
     }
 
     override fun onPlaybackStateChanged(isPlaying: Boolean) {
@@ -88,7 +101,30 @@ class RootLyricSink(
         if (lyricChanged) {
             renderer.updateLyricLine()
         }
-        renderer.updatePosition(position)
+        dispatchPositionThrottled(position)
+    }
+
+    private fun dispatchPositionThrottled(position: Long) {
+        val now = SystemClock.uptimeMillis()
+        val elapsed = now - lastPositionDispatchTimeMs
+        if (elapsed >= MIN_POSITION_DISPATCH_INTERVAL_MS) {
+            lastPositionDispatchTimeMs = now
+            pendingPosition = null
+            renderer.updatePosition(position)
+            return
+        }
+
+        pendingPosition = position
+        if (positionDispatchScheduled) return
+
+        positionDispatchScheduled = true
+        mainHandler.postDelayed({
+            positionDispatchScheduled = false
+            val latest = pendingPosition ?: return@postDelayed
+            pendingPosition = null
+            lastPositionDispatchTimeMs = SystemClock.uptimeMillis()
+            renderer.updatePosition(latest)
+        }, MIN_POSITION_DISPATCH_INTERVAL_MS - elapsed)
     }
 
     private fun startAiTranslation(song: Song, prefs: SharedPreferences) {

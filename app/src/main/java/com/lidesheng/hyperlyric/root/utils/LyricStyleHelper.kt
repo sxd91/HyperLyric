@@ -40,8 +40,37 @@ object LyricStyleHelper {
         // 控制 assembler 选什么内容，无内容时 assembler 返回 alwaysShow=false → secondary GONE
         val showSecondary = isMetadataDualLine || mode == 7
 
-        val isMarqueeEnabled = prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_MODE, RootConstants.DEFAULT_HOOK_MARQUEE_MODE)
-        val infinite = prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_INFINITE, RootConstants.DEFAULT_HOOK_MARQUEE_INFINITE)
+        val isLyricMode = mode == 7
+        val isMarqueeEnabled = if (isLyricMode) {
+            prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_MODE, RootConstants.DEFAULT_HOOK_MARQUEE_MODE)
+        } else {
+            prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_METADATA_MODE, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_MODE)
+        }
+        val marqueeSpeed = if (isLyricMode) {
+            prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_SPEED, RootConstants.DEFAULT_HOOK_MARQUEE_SPEED)
+        } else {
+            prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_METADATA_SPEED, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_SPEED)
+        }
+        val marqueeDelay = if (isLyricMode) {
+            prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_DELAY, RootConstants.DEFAULT_HOOK_MARQUEE_DELAY)
+        } else {
+            prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_METADATA_DELAY, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_DELAY)
+        }
+        val marqueeLoopDelay = if (isLyricMode) {
+            prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_LOOP_DELAY, RootConstants.DEFAULT_HOOK_MARQUEE_LOOP_DELAY)
+        } else {
+            prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_METADATA_LOOP_DELAY, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_LOOP_DELAY)
+        }
+        val infinite = if (isLyricMode) {
+            prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_INFINITE, RootConstants.DEFAULT_HOOK_MARQUEE_INFINITE)
+        } else {
+            prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_METADATA_INFINITE, RootConstants.DEFAULT_HOOK_MARQUEE_METADATA_INFINITE)
+        }
+        val stopAtEnd = if (isLyricMode) {
+            prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_STOP_END, RootConstants.DEFAULT_HOOK_MARQUEE_STOP_END)
+        } else {
+            true
+        }
 
         // Determine text colors: use cover colors if enabled, otherwise white
         val useCoverColor = prefs.getBoolean(RootConstants.KEY_HOOK_EXTRACT_COVER_TEXT_COLOR, RootConstants.DEFAULT_HOOK_EXTRACT_COVER_TEXT_COLOR)
@@ -51,16 +80,16 @@ object LyricStyleHelper {
         val bgColors: IntArray
         val hlColors: IntArray
 
+        val songKey = LyriconDataBridge.currentSongName
         if (useCoverColor) {
             if (albumBitmap != null) {
-                val songKey = LyriconDataBridge.currentSongName
                 val (_, darkColors) = CoverColorHelper.extractColors(albumBitmap, useCoverGradient, songKey)
                 val translucentDarkColors = darkColors.map { Color.argb(191, Color.red(it), Color.green(it), Color.blue(it)) }.toIntArray()
                 primaryColors = darkColors   // 无逐字/标题 -> 封面颜色
                 bgColors = translucentDarkColors // 未唱到 -> 封面颜色(75%透明度)
                 hlColors = darkColors        // 已唱到 -> 封面颜色
             } else {
-                val cached = CoverColorHelper.getCachedColors()
+                val cached = CoverColorHelper.getCachedColors(useCoverGradient, songKey)
                 if (cached != null) {
                     val darkColors = cached.second
                     val translucentDarkColors = darkColors.map { Color.argb(191, Color.red(it), Color.green(it), Color.blue(it)) }.toIntArray()
@@ -97,11 +126,11 @@ object LyricStyleHelper {
                 foreground = hlColors,
             ),
             marquee = Marquee(
-                speed = if (isMarqueeEnabled) prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_SPEED, RootConstants.DEFAULT_HOOK_MARQUEE_SPEED).toFloat() else 0f,
-                initialDelay = prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_DELAY, RootConstants.DEFAULT_HOOK_MARQUEE_DELAY),
-                loopDelay = prefs.getInt(RootConstants.KEY_HOOK_MARQUEE_LOOP_DELAY, RootConstants.DEFAULT_HOOK_MARQUEE_LOOP_DELAY),
+                speed = if (isMarqueeEnabled) marqueeSpeed.toFloat() else 0f,
+                initialDelay = marqueeDelay,
+                loopDelay = marqueeLoopDelay,
                 repeatCount = if (!isMarqueeEnabled) 0 else if (infinite) -1 else 1,
-                stopAtEnd = prefs.getBoolean(RootConstants.KEY_HOOK_MARQUEE_STOP_END, RootConstants.DEFAULT_HOOK_MARQUEE_STOP_END),
+                stopAtEnd = stopAtEnd,
             ),
             gradient = prefs.getBoolean(RootConstants.KEY_HOOK_GRADIENT_PROGRESS, RootConstants.DEFAULT_HOOK_GRADIENT_PROGRESS),
             fadingEdge = prefs.getInt(RootConstants.KEY_HOOK_FADING_EDGE_LENGTH, RootConstants.DEFAULT_HOOK_FADING_EDGE_LENGTH),

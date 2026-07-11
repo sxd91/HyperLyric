@@ -26,6 +26,13 @@ internal class ProgressAnimator {
         isAnimating = false
     }
 
+    fun stopAtCurrent() {
+        startWidth = currentWidth
+        targetWidth = currentWidth
+        elapsedNanos = 0L
+        isAnimating = false
+    }
+
     fun animateTo(target: Float, durationMs: Long) {
         startWidth = currentWidth
         targetWidth = target

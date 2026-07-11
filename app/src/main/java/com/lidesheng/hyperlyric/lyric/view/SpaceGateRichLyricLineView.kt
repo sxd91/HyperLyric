@@ -42,6 +42,7 @@ class SpaceGateRichLyricLineView(
     private var pendingLine: IRichLyricLine? = null
     private var pendingPosition: Long? = null
     private var requestMarquee = false
+    private var lastPosition: Long = Long.MIN_VALUE
 
     var rawLine: IRichLyricLine? = null
 
@@ -49,6 +50,7 @@ class SpaceGateRichLyricLineView(
         get() = rawLine
         set(value) {
             rawLine = value
+            lastPosition = Long.MIN_VALUE
             requestMarquee = false
             if (animationTransition) {
                 pendingLine = value
@@ -78,6 +80,7 @@ class SpaceGateRichLyricLineView(
         animationTransition = false
         pendingLine = null
         pendingPosition = null
+        lastPosition = Long.MIN_VALUE
         alwaysShowSecondary = false
         refreshLines()
     }
@@ -114,8 +117,15 @@ class SpaceGateRichLyricLineView(
         if (animationTransition) {
             pendingPosition = position; return
         }
+        if (lastPosition == position) return
+        lastPosition = position
         main.updatePosition(position)
         secondary.updatePosition(position)
+    }
+
+    fun setPlaybackActive(active: Boolean) {
+        main.setPlaybackActive(active)
+        secondary.setPlaybackActive(active)
     }
 
     fun requestStartMarquee() {

@@ -1,9 +1,9 @@
 package com.lidesheng.hyperlyric.root.island.renderer
 
-import io.github.libxposed.api.XposedInterface.Chain
-
 /**
- * 超级岛渲染器接口，规范了宿主事件回调与渲染更新契约。
+ * 超级岛渲染器接口。
+ * 仅负责外部事件驱动的更新（歌词变化、播放状态、进度同步）。
+ * 注入逻辑由 IslandTextHooker 在 bind() 中统一处理。
  */
 interface IslandRenderer {
     fun refreshActiveIsland()
@@ -11,14 +11,4 @@ interface IslandRenderer {
     fun updatePosition(position: Long)
     fun onPlaybackStateChanged(isPlaying: Boolean)
     fun clearAllViews()
-
-    /**
-     * 宿主拦截到大岛宽度计算时的回调（预注入卡槽）
-     */
-    fun onPreInject(chain: Chain): Any?
-
-    /**
-     * 宿主拦截到大岛视图更新时的回调（更新/挂载视图内容与配置）
-     */
-    fun onUpdateBigIsland(chain: Chain): Any?
 }

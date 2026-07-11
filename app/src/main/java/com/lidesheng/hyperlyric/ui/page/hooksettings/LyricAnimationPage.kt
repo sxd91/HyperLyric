@@ -1,7 +1,6 @@
 ﻿package com.lidesheng.hyperlyric.ui.page.hooksettings
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -139,7 +138,6 @@ private fun LazyListScope.animationPageSections() {
                     is Boolean -> PrefsBridge.putBoolean(key, value)
                     is String -> PrefsBridge.putString(key, value)
                 }
-                context.sendBroadcast(Intent("com.lidesheng.hyperlyric.UPDATE_LYRIC_ANIM"))
             }
         }
 

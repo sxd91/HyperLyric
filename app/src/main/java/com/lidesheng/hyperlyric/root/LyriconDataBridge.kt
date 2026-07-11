@@ -28,7 +28,13 @@ object LyriconDataBridge : StateResetter {
     var currentLyricLine: IRichLyricLine? = null
 
     @Volatile
+    var currentPosition: Long = 0L
+
+    @Volatile
     var activePackageName: String? = null
+
+    @Volatile
+    var currentLyricPackageName: String? = null
 
     /** 是否处于纯文本模式（椒盐音乐等通过 onSendText 推送） */
     @Volatile
@@ -44,6 +50,11 @@ object LyriconDataBridge : StateResetter {
 
     /** AI 翻译完成后的回调，由 LyriconSource 设置 */
     var onAiTranslationComplete: (() -> Unit)? = null
+
+    fun updateLyricPackage(packageName: String?) {
+        activePackageName = packageName
+        currentLyricPackageName = packageName
+    }
 
     private var timingNavigator: TimingNavigator<TimedLine> = TimingNavigator(emptyArray())
     private var interludeTracker = InterludeTracker(8_000L)
@@ -76,6 +87,7 @@ object LyriconDataBridge : StateResetter {
     }
 
     fun updatePosition(position: Long): Boolean {
+        currentPosition = position
         if (isTextMode) return false
         val song = currentSong ?: return false
         val lyrics = song.lyrics
@@ -123,7 +135,9 @@ object LyriconDataBridge : StateResetter {
         currentSongName = null
         currentLyric = null
         currentLyricLine = null
+        currentPosition = 0L
         activePackageName = null
+        currentLyricPackageName = null
         isTextMode = false
         isDisplayTranslation = true
         isDisplayRoma = true

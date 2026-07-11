@@ -83,7 +83,9 @@ class LyricInfoSource(private val context: Context) : LyricSource {
                 val cb = object : MediaController.Callback() {
                     override fun onMetadataChanged(metadata: MediaMetadata?) = onMetadataUpdate(ctrl)
                     override fun onPlaybackStateChanged(state: PlaybackState?) {
-                        sink?.onPlaybackStateChanged(state?.state == PlaybackState.STATE_PLAYING)
+                        if (ctrl.packageName == activePkg) {
+                            sink?.onPlaybackStateChanged(state?.state == PlaybackState.STATE_PLAYING)
+                        }
                     }
                     override fun onSessionDestroyed() = onActiveSessionsChanged(manager.getActiveSessions(null))
                 }
@@ -119,11 +121,11 @@ class LyricInfoSource(private val context: Context) : LyricSource {
                 lastLyricHash = currentHash
                 hasLyrics = true
                 activePkg = pkg
-                LyriconDataBridge.activePackageName = pkg
-                sink?.onPlaybackStateChanged(true)
+                LyriconDataBridge.updateLyricPackage(pkg)
                 LyriconDataBridge.updateSong(song)
                 sink?.onSongChanged(song)
                 sink?.onMetadata(title = songName, artist = artist, album = "", publisher = pkg)
+                sink?.onPlaybackStateChanged(controller.playbackState?.state == PlaybackState.STATE_PLAYING)
                 startPositionPolling(pkg)
                 HookLogger.d("LyricInfoSource", "歌词就绪: $songName | ${song.lyrics!!.size}行")
             }
@@ -153,11 +155,14 @@ class LyricInfoSource(private val context: Context) : LyricSource {
                     val state = ctrl?.playbackState
                     if (state != null) {
                         val statePos = state.position
+                        val now = System.currentTimeMillis()
+                        val isPlaying = state.state == PlaybackState.STATE_PLAYING
                         if (statePos != lastKnownPos) {
-                            lastKnownPos = statePos; lastPollTime = System.currentTimeMillis()
-                        } else {
-                            val now = System.currentTimeMillis()
+                            lastKnownPos = statePos; lastPollTime = now
+                        } else if (isPlaying) {
                             lastKnownPos += now - lastPollTime; lastPollTime = now
+                        } else {
+                            lastPollTime = now
                         }
                         sink?.onPositionChanged(lastKnownPos)
                     }

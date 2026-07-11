@@ -1,7 +1,6 @@
 package com.lidesheng.hyperlyric.ui.page.hooksettings
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import com.lidesheng.hyperlyric.ui.component.NumberInputDialog
 import com.lidesheng.hyperlyric.ui.component.PaddingInputDialog
@@ -35,7 +34,6 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
-import top.yukonga.miuix.kmp.basic.Slider
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
@@ -85,15 +83,6 @@ fun SuperIslandSettingsPage() {
             is Int -> PrefsBridge.putInt(key, value)
             is Boolean -> PrefsBridge.putBoolean(key, value)
         }
-        val refreshKeys = setOf(
-            RootConstants.KEY_HOOK_ISLAND_LEFT_ALBUM, RootConstants.KEY_HOOK_ISLAND_RIGHT_ICON,
-            RootConstants.KEY_HOOK_ISLAND_CONTENT_LEFT, RootConstants.KEY_HOOK_ISLAND_CONTENT_RIGHT,
-            RootConstants.KEY_HOOK_ISLAND_LEFT_PADDING_LEFT, RootConstants.KEY_HOOK_ISLAND_LEFT_PADDING_RIGHT,
-            RootConstants.KEY_HOOK_ISLAND_RIGHT_PADDING_LEFT, RootConstants.KEY_HOOK_ISLAND_RIGHT_PADDING_RIGHT,
-            RootConstants.KEY_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH, RootConstants.KEY_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH,
-            RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE, RootConstants.KEY_HOOK_ISLAND_GLOW_EXTRACT_COLOR
-        )
-        if (key in refreshKeys) context.sendBroadcast(Intent("com.lidesheng.hyperlyric.REFRESH_ISLAND"))
     }
 
     val contentOptions = remember {
@@ -168,26 +157,12 @@ fun SuperIslandSettingsPage() {
                             ArrowPreference(
                                 title = stringResource(id = R.string.title_left_content_width), 
                                 endActions = { Text("$leftContentWidth", fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) }, 
-                                onClick = { showLeftContentWidthDialog = true }, 
-                                bottomAction = { 
-                                    Slider(
-                                        value = leftContentWidth.toFloat(), 
-                                        onValueChange = { leftContentWidth = it.toInt(); saveConfig(RootConstants.KEY_HOOK_ISLAND_LEFT_CONTENT_MAX_WIDTH, it.toInt()) }, 
-                                        valueRange = 20f..100f
-                                    )
-                                }
+                                onClick = { showLeftContentWidthDialog = true }
                             )
                             ArrowPreference(
                                 title = stringResource(id = R.string.title_right_content_width), 
                                 endActions = { Text("$rightContentWidth", fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) }, 
-                                onClick = { showRightContentWidthDialog = true }, 
-                                bottomAction = { 
-                                    Slider(
-                                        value = rightContentWidth.toFloat(), 
-                                        onValueChange = { rightContentWidth = it.toInt(); saveConfig(RootConstants.KEY_HOOK_ISLAND_RIGHT_CONTENT_MAX_WIDTH, it.toInt()) }, 
-                                        valueRange = 20f..100f
-                                    )
-                                }
+                                onClick = { showRightContentWidthDialog = true }
                             )
                             ArrowPreference(
                                 title = stringResource(id = R.string.title_left_padding), 

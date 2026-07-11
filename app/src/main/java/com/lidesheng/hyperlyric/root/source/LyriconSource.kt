@@ -1,12 +1,9 @@
 package com.lidesheng.hyperlyric.root.source
 
 import android.app.Application
-import android.content.SharedPreferences
 import com.lidesheng.hyperlyric.lyric.source.LyricSink
 import com.lidesheng.hyperlyric.lyric.source.LyricSource
-import com.lidesheng.hyperlyric.root.island.renderer.IslandRenderer
-import com.lidesheng.hyperlyric.root.island.renderer.SplitIslandRenderer
-import com.lidesheng.hyperlyric.root.island.renderer.StandardIslandRenderer
+import com.lidesheng.hyperlyric.root.island.renderer.BaseIslandRenderer
 import com.lidesheng.hyperlyric.root.LyriconDataBridge
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import io.github.proify.lyricon.lyric.model.Song
@@ -37,11 +34,6 @@ class LyriconSource : LyricSource {
     @Volatile
     private var sink: LyricSink? = null
     private var app: Application? = null
-    private var prefs: SharedPreferences? = null
-    private var activeMode: Int = 0
-    @Volatile
-    private var renderer: IslandRenderer? = null
-
     @Volatile
     private var subscriber: LyriconSubscriber? = null
 
@@ -76,23 +68,12 @@ class LyriconSource : LyricSource {
         HookLogger.i(TAG, "Lyricon 数据源已停止")
     }
 
-    fun initialize(app: Application, prefs: SharedPreferences, activeMode: Int) {
+    fun initialize(app: Application) {
         this.app = app
-        this.prefs = prefs
-        this.activeMode = activeMode
-        this.renderer = if (activeMode == 1) SplitIslandRenderer else StandardIslandRenderer
 
         LyriconDataBridge.onAiTranslationComplete = {
-            renderer?.refreshActiveIsland()
+            BaseIslandRenderer.refreshActiveIsland()
         }
-    }
-
-    private fun getRenderer(): IslandRenderer =
-        renderer ?: if (activeMode == 1) SplitIslandRenderer else StandardIslandRenderer
-
-    fun updateRenderer(newRenderer: IslandRenderer, newMode: Int) {
-        this.renderer = newRenderer
-        this.activeMode = newMode
     }
 
     private fun initializeSubscriber(app: Application) {
@@ -125,43 +106,38 @@ class LyriconSource : LyricSource {
     private val activePlayerListener = object : ActivePlayerListener {
         override fun onActiveProviderChanged(providerInfo: ProviderInfo?) {
             sink?.onStop()
-            LyriconDataBridge.activePackageName = providerInfo?.playerPackageName
+            LyriconDataBridge.updateLyricPackage(providerInfo?.playerPackageName)
         }
 
         override fun onSongChanged(song: Song?) {
             val localSong = song?.toLocalSong()
             LyriconDataBridge.updateSong(localSong)
             sink?.onSongChanged(localSong)
-            getRenderer().refreshActiveIsland()
+            BaseIslandRenderer.refreshActiveIsland()
         }
 
         override fun onPlaybackStateChanged(isPlaying: Boolean) {
             sink?.onPlaybackStateChanged(isPlaying)
-            getRenderer().onPlaybackStateChanged(isPlaying)
         }
 
         override fun onPositionChanged(position: Long) {
-            val lyricChanged = LyriconDataBridge.updatePosition(position)
-            if (lyricChanged) {
-                getRenderer().updateLyricLine()
-            }
             sink?.onPositionChanged(position)
-            getRenderer().updatePosition(position)
         }
 
         override fun onSeekTo(position: Long) {}
 
         override fun onReceiveText(text: String?) {
-            LyriconDataBridge.updateLyric(text)
             sink?.onPlainText(text)
-            getRenderer().updateLyricLine()
         }
 
-        override fun onDisplayTranslationChanged(isDisplayTranslation: Boolean) {}
+        override fun onDisplayTranslationChanged(isDisplayTranslation: Boolean) {
+            LyriconDataBridge.isDisplayTranslation = isDisplayTranslation
+            BaseIslandRenderer.refreshActiveIsland()
+        }
 
         override fun onDisplayRomaChanged(isDisplayRoma: Boolean) {
             LyriconDataBridge.isDisplayRoma = isDisplayRoma
-            getRenderer().refreshActiveIsland()
+            BaseIslandRenderer.refreshActiveIsland()
         }
     }
 }
