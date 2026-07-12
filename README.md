@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/ic_launcher_foreground.svg" width="128" height="128" alt="HyperLyric Logo"/>
-</p>
-
 <h1 align="center">HyperLyric</h1>
 
 <p align="center">
@@ -83,8 +79,8 @@ HyperLyric 解耦了歌词来源。无论是哪种数据源，均由项目底层
 
 - 本项目采用 **GNU General Public License v3.0** 开源协议发布。
 - 特别感谢以下项目：
-  - [miuix-kmp](https://github.com/compose-miuix-ui/miuix) — HyperOS 风格的 Compose 组件库。
-  - [lyricon](https://github.com/tomakino/lyricon) — 本项目大多数歌词动画均移植于 lyricon 项目。
-  - [SuperLyric](https://github.com/HChenX/SuperLyric) 
-  - [LyricInfo](https://github.com/limczhh/LyricInfo) 
-  - [libxposed](https://github.com/libxposed/api)
+ - [miuix-kmp](https://github.com/compose-miuix-ui/miuix) — HyperOS 风格的 Compose 组件库。
+ - [lyricon](https://github.com/tomakino/lyricon) — 本项目大多数歌词动画均移植于 lyricon 项目。
+ - [SuperLyric](https://github.com/HChenX/SuperLyric) 
+ - [LyricInfo](https://github.com/limczhh/LyricInfo) 
+ - [libxposed](https://github.com/libxposed/api)
