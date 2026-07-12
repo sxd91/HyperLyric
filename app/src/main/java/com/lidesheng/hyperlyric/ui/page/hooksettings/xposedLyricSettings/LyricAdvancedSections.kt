@@ -17,9 +17,7 @@ import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-fun LazyListScope.advancedSections(
-    lyricSource: String,
-    lyricMode: Int,
+fun LazyListScope.verbatimLyricSections(
     gradientStyle: Boolean,
     onGradientStyleChange: (Boolean) -> Unit,
     syllableRelative: Boolean,
@@ -35,48 +33,30 @@ fun LazyListScope.advancedSections(
     wordMotionLatinLift: Float,
     onWordMotionLatinLiftClick: () -> Unit,
     wordMotionLatinWave: Float,
-    onWordMotionLatinWaveClick: () -> Unit,
-    disableTranslation: Boolean,
-    onDisableTranslationChange: (Boolean) -> Unit,
-    translationOnly: Boolean,
-    onTranslationOnlyChange: (Boolean) -> Unit,
-    swapTranslation: Boolean,
-    onSwapTranslationChange: (Boolean) -> Unit,
-    nextLyricLine: Boolean,
-    onNextLyricLineChange: (Boolean) -> Unit,
-    aiTransEnabled: Boolean,
-    onAiTransEnabledChange: (Boolean) -> Unit,
-    autoIgnoreChinese: Boolean,
-    onAutoIgnoreChineseChange: (Boolean) -> Unit,
-    skipExistingTranslation: Boolean,
-    onSkipExistingTranslationChange: (Boolean) -> Unit,
-    targetLang: String,
-    onTargetLangClick: () -> Unit,
-    apiKey: String,
-    onApiKeyClick: () -> Unit,
-    model: String,
-    onModelClick: () -> Unit,
-    baseUrl: String,
-    onBaseUrlClick: () -> Unit,
-    prompt: String,
-    onPromptClick: () -> Unit
+    onWordMotionLatinWaveClick: () -> Unit
 ) {
-    item {
+    item(key = "verbatim_lyric") {
         Column {
             SmallTitle(text = stringResource(id = R.string.title_verbatim_lyric))
             Card(modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp).fillMaxWidth()) {
                 Column {
-                    SwitchPreference(title = stringResource(id = R.string.title_gradient_progress), checked = gradientStyle, onCheckedChange = onGradientStyleChange)
+                    SwitchPreference(
+                        title = stringResource(id = R.string.title_gradient_progress),
+                        checked = gradientStyle,
+                        onCheckedChange = onGradientStyleChange
+                    )
                     SwitchPreference(
                         title = stringResource(id = R.string.title_syllable_relative),
                         summary = stringResource(id = R.string.summary_syllable_relative),
                         checked = syllableRelative,
                         onCheckedChange = onSyllableRelativeChange
                     )
-                    SwitchPreference(title = stringResource(id = R.string.title_syllable_highlight), checked = syllableHighlight, onCheckedChange = onSyllableHighlightChange)
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                    SwitchPreference(
+                        title = stringResource(id = R.string.title_syllable_highlight),
+                        checked = syllableHighlight,
+                        onCheckedChange = onSyllableHighlightChange
                     )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
                         title = stringResource(id = R.string.title_word_motion),
                         checked = wordMotionEnabled,
@@ -134,8 +114,37 @@ fun LazyListScope.advancedSections(
             }
         }
     }
+}
 
-    item {
+fun LazyListScope.translationSections(
+    lyricSource: String,
+    lyricMode: Int,
+    disableTranslation: Boolean,
+    onDisableTranslationChange: (Boolean) -> Unit,
+    translationOnly: Boolean,
+    onTranslationOnlyChange: (Boolean) -> Unit,
+    swapTranslation: Boolean,
+    onSwapTranslationChange: (Boolean) -> Unit,
+    nextLyricLine: Boolean,
+    onNextLyricLineChange: (Boolean) -> Unit,
+    aiTransEnabled: Boolean,
+    onAiTransEnabledChange: (Boolean) -> Unit,
+    autoIgnoreChinese: Boolean,
+    onAutoIgnoreChineseChange: (Boolean) -> Unit,
+    skipExistingTranslation: Boolean,
+    onSkipExistingTranslationChange: (Boolean) -> Unit,
+    targetLang: String,
+    onTargetLangClick: () -> Unit,
+    apiKey: String,
+    onApiKeyClick: () -> Unit,
+    model: String,
+    onModelClick: () -> Unit,
+    baseUrl: String,
+    onBaseUrlClick: () -> Unit,
+    prompt: String,
+    onPromptClick: () -> Unit
+) {
+    item(key = "translation") {
         val supportsNextLyricLine = (lyricSource == "lyricon" || lyricSource == "lyricinfo") && lyricMode == 0
         val translationControlsEnabled = !supportsNextLyricLine || !nextLyricLine
         val translationActionColor = if (translationControlsEnabled) {
@@ -143,6 +152,7 @@ fun LazyListScope.advancedSections(
         } else {
             MiuixTheme.colorScheme.disabledOnSecondaryVariant
         }
+
         Column {
             SmallTitle(text = stringResource(id = R.string.title_translation))
             Card(modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp).fillMaxWidth()) {
@@ -177,9 +187,7 @@ fun LazyListScope.advancedSections(
 
                 AnimatedVisibility(visible = lyricSource == "lyricon" || lyricSource == "lyricinfo") {
                     Column {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                         SwitchPreference(
                             title = stringResource(id = R.string.title_ai_translation),
                             checked = aiTransEnabled,
@@ -217,7 +225,7 @@ fun LazyListScope.advancedSections(
                                         title = stringResource(id = R.string.label_ai_trans_api_key),
                                         endActions = {
                                             Text(
-                                                if (apiKey.isNotEmpty()) "***************" else "未配置",
+                                                if (apiKey.isNotEmpty()) "***************" else stringResource(id = R.string.summary_not_configured),
                                                 fontSize = MiuixTheme.textStyles.body2.fontSize,
                                                 color = translationActionColor
                                             )
@@ -245,7 +253,11 @@ fun LazyListScope.advancedSections(
                                     )
                                     ArrowPreference(
                                         title = stringResource(R.string.title_custom_prompt),
-                                        summary = if (prompt.lines().size > 3) prompt.lines().take(2).joinToString("\n") + "..." else prompt,
+                                        summary = if (prompt.lines().size > 3) {
+                                            prompt.lines().take(2).joinToString("\n") + "..."
+                                        } else {
+                                            prompt
+                                        },
                                         onClick = onPromptClick,
                                         enabled = translationControlsEnabled
                                     )

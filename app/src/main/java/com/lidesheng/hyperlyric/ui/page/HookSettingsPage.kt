@@ -150,7 +150,10 @@ private fun LazyListScope.hookSettingsSections(
         Card(modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth()) {
             Column {
                 ArrowPreference(title = stringResource(R.string.title_super_island), onClick = { navigator.navigate(Route.SuperIslandSettings) })
-                ArrowPreference(title = stringResource(R.string.title_lyrics), onClick = { navigator.navigate(Route.LyricSettings) })
+                ArrowPreference(title = stringResource(R.string.title_text), onClick = { navigator.navigate(Route.LyricDisplay) })
+                ArrowPreference(title = stringResource(R.string.title_marquee), onClick = { navigator.navigate(Route.LyricScroll) })
+                ArrowPreference(title = stringResource(R.string.title_verbatim_lyric), onClick = { navigator.navigate(Route.VerbatimLyric) })
+                ArrowPreference(title = stringResource(R.string.title_translation), onClick = { navigator.navigate(Route.LyricTranslation) })
                 ArrowPreference(title = stringResource(R.string.title_lyric_anim), onClick = { navigator.navigate(Route.LyricAnimation) })
                 AnimatedVisibility(visible = lyricSource == "lyricon") {
                     ArrowPreference(title = stringResource(R.string.title_lyric_provider), onClick = { navigator.navigate(Route.LyricProvider) })

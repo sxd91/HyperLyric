@@ -10,6 +10,13 @@ object ChangelogData {
     fun getChangelog(): List<ChangelogItem> {
         return listOf(
             ChangelogItem(
+                version = "6.2-1933",
+                title = "晚上好",
+                summary = "- miuix 更新至0.9.3\n" +
+                        "- libxposed api 更新至102，适配热重载\n" +
+                        "- 优化小米超级岛歌词自定义配置的界面布局"
+            ),
+            ChangelogItem(
                 version = "6.1-1933",
                 title = "修 bug 为主~",
                 summary = "- 新增应用语言切换功能\n" +

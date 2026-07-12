@@ -103,7 +103,7 @@
     <string name="subtitle_super_island">暂停或切换音乐后生效</string>
     <string name="title_lyrics">音乐信息</string>
     <string name="title_lyric_anim">歌词切换动画</string>
-    <string name="title_lyric_provider">lyricon歌词提供器</string>
+    <string name="title_lyric_provider">歌词源 (Lyricon)</string>
     <string name="title_lyric_whitelist">歌词白名单</string>
 
     <!-- ———————————————————————— DynamicIslandNotificationPage ———————————————————————— -->
@@ -224,7 +224,7 @@
     <string name="title_italic">斜体</string>
     <string name="title_gradient_progress">羽化进度样式</string>
     <string name="title_lyric_marquee">歌词滚动</string>
-    <string name="title_marquee">滚动</string>
+    <string name="title_marquee">滚动显示</string>
     <string name="summary_lyric_marquee">针对没有时间轴的歌词</string>
     <string name="title_infinite_loop">无限循环</string>
     <string name="title_stop_at_end">结束时在末尾停止</string>
@@ -251,6 +251,7 @@
     <string name="label_word_motion_wave_range">范围：0 ~ 8</string>
     <string name="title_custom_font">字体</string>
     <string name="summary_default_font">默认</string>
+    <string name="summary_not_configured">未配置</string>
     <string name="title_ai_translation">OpenAI 翻译</string>
     <string name="title_ai_trans_basic">基础设置</string>
     <string name="title_ai_trans_auto_ignore_chinese">自动跳过中文歌词</string>

@@ -20,6 +20,10 @@ import com.lidesheng.hyperlyric.ui.page.hooksettings.LyricProviderPage
 import com.lidesheng.hyperlyric.ui.page.hooksettings.LyricAnimationPage
 import com.lidesheng.hyperlyric.ui.page.hooksettings.LyricSettingsPage
 import com.lidesheng.hyperlyric.ui.page.hooksettings.SuperIslandSettingsPage
+import com.lidesheng.hyperlyric.ui.page.hooksettings.xposedLyricSettings.LyricDisplayPage
+import com.lidesheng.hyperlyric.ui.page.hooksettings.xposedLyricSettings.LyricScrollPage
+import com.lidesheng.hyperlyric.ui.page.hooksettings.xposedLyricSettings.LyricTranslationPage
+import com.lidesheng.hyperlyric.ui.page.hooksettings.xposedLyricSettings.VerbatimLyricPage
 import com.lidesheng.hyperlyric.ui.page.DynamicIslandNotificationPage
 import com.lidesheng.hyperlyric.ui.page.HelpPage
 import com.lidesheng.hyperlyric.ui.page.ChangelogPage
@@ -45,6 +49,10 @@ fun AppNavigation(startRoute: Route) {
                 entry<Route.LyricProvider> { LyricProviderPage() }
                 entry<Route.LyricAnimation> { LyricAnimationPage() }
                 entry<Route.LyricSettings> { LyricSettingsPage() }
+                entry<Route.LyricDisplay> { LyricDisplayPage() }
+                entry<Route.LyricScroll> { LyricScrollPage() }
+                entry<Route.VerbatimLyric> { VerbatimLyricPage() }
+                entry<Route.LyricTranslation> { LyricTranslationPage() }
                 entry<Route.SuperIslandSettings> { SuperIslandSettingsPage() }
                 entry<Route.DynamicIslandNotification> { DynamicIslandNotificationPage() }
                 entry<Route.Log> { LogPage() }

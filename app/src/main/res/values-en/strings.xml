@@ -103,7 +103,7 @@
     <string name="subtitle_super_island">Takes effect after music paused or changed</string>
     <string name="title_lyrics">Media Info</string>
     <string name="title_lyric_anim">Lyric Animation</string>
-    <string name="title_lyric_provider">Lyric Provider</string>
+    <string name="title_lyric_provider">Lyric Source (Lyricon)</string>
     <string name="title_lyric_whitelist">Lyric Whitelist</string>
 
     <!-- ———————————————————————— DynamicIslandNotificationPage ———————————————————————— -->
@@ -206,7 +206,7 @@
     <string name="label_font_weight_range">Range: 100 ~ 900</string>
     <string name="title_fading_edge">Fading Edge Length</string>
     <string name="label_fading_edge_range">Range: 0 ~ 100</string>
-    <string name="title_marquee">Marquee</string>
+    <string name="title_marquee">Scrolling</string>
     <string name="title_marquee_speed">Marquee Speed</string>
     <string name="label_marquee_speed_range">Range: 5 ~ 100</string>
     <string name="title_marquee_metadata_speed">Marquee Speed</string>
@@ -251,6 +251,7 @@
     <string name="label_word_motion_wave_range">Range: 0 ~ 8</string>
     <string name="title_custom_font">Font</string>
     <string name="summary_default_font">Default</string>
+    <string name="summary_not_configured">Not configured</string>
     <string name="title_ai_translation">OpenAI Translation</string>
     <string name="title_ai_trans_basic">Basic Settings</string>
     <string name="title_ai_trans_auto_ignore_chinese">Automatically Skip Chinese Lyrics</string>

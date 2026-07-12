@@ -17,14 +17,12 @@ import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-fun LazyListScope.basicSections(
-    lyricMode: Int,
+fun LazyListScope.lyricDisplaySections(
     textSize: Int,
     onTextSizeClick: () -> Unit,
     textSizeRatio: Float,
     onTextSizeRatioClick: () -> Unit,
     fadingEdge: Int,
-    onFadingEdgeChange: (Int) -> Unit,
     onFadingEdgeClick: () -> Unit,
     extractCoverColor: Boolean,
     onExtractCoverColorChange: (Boolean) -> Unit,
@@ -37,31 +35,9 @@ fun LazyListScope.basicSections(
     fontItalic: Boolean,
     onFontItalicChange: (Boolean) -> Unit,
     centerLyric: Boolean,
-    onCenterLyricChange: (Boolean) -> Unit,
-    marqueeMode: Boolean,
-    onMarqueeModeChange: (Boolean) -> Unit,
-    marqueeSpeed: Int,
-    onMarqueeSpeedClick: () -> Unit,
-    marqueeDelay: Int,
-    onMarqueeDelayClick: () -> Unit,
-    marqueeInfinite: Boolean,
-    onMarqueeInfiniteChange: (Boolean) -> Unit,
-    marqueeLoop: Int,
-    onMarqueeLoopClick: () -> Unit,
-    marqueeStopEnd: Boolean,
-    onMarqueeStopEndChange: (Boolean) -> Unit,
-    marqueeMetadataMode: Boolean,
-    onMarqueeMetadataModeChange: (Boolean) -> Unit,
-    marqueeMetadataSpeed: Int,
-    onMarqueeMetadataSpeedClick: () -> Unit,
-    marqueeMetadataDelay: Int,
-    onMarqueeMetadataDelayClick: () -> Unit,
-    marqueeMetadataInfinite: Boolean,
-    onMarqueeMetadataInfiniteChange: (Boolean) -> Unit,
-    marqueeMetadataLoopDelay: Int,
-    onMarqueeMetadataLoopClick: () -> Unit
+    onCenterLyricChange: (Boolean) -> Unit
 ) {
-    item {
+    item(key = "lyric_display") {
         Column {
             SmallTitle(text = stringResource(id = R.string.title_text))
             Card(modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp).fillMaxWidth()) {
@@ -79,7 +55,13 @@ fun LazyListScope.basicSections(
                     )
                     ArrowPreference(
                         title = stringResource(id = R.string.title_text_size_ratio),
-                        endActions = { Text(stringResource(id = R.string.format_percent, (textSizeRatio * 100).toInt()), fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) },
+                        endActions = {
+                            Text(
+                                stringResource(id = R.string.format_percent, (textSizeRatio * 100).toInt()),
+                                fontSize = MiuixTheme.textStyles.body2.fontSize,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantActions
+                            )
+                        },
                         onClick = onTextSizeRatioClick
                     )
                     ArrowPreference(
@@ -89,19 +71,24 @@ fun LazyListScope.basicSections(
                                 "$fadingEdge",
                                 fontSize = MiuixTheme.textStyles.body2.fontSize,
                                 color = MiuixTheme.colorScheme.onSurfaceVariantActions
-                            ) },
+                            )
+                        },
                         onClick = onFadingEdgeClick
                     )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                    SwitchPreference(
+                        title = stringResource(id = R.string.title_extract_cover_color),
+                        checked = extractCoverColor,
+                        onCheckedChange = onExtractCoverColorChange
                     )
-                    SwitchPreference(title = stringResource(id = R.string.title_extract_cover_color), checked = extractCoverColor, onCheckedChange = onExtractCoverColorChange)
                     AnimatedVisibility(visible = extractCoverColor) {
-                        SwitchPreference(title = stringResource(id = R.string.title_extract_cover_gradient), checked = extractCoverGradient, onCheckedChange = onExtractCoverGradientChange)
+                        SwitchPreference(
+                            title = stringResource(id = R.string.title_extract_cover_gradient),
+                            checked = extractCoverGradient,
+                            onCheckedChange = onExtractCoverGradientChange
+                        )
                     }
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ArrowPreference(
                         title = stringResource(id = R.string.title_custom_font),
                         endActions = {
@@ -129,9 +116,7 @@ fun LazyListScope.basicSections(
                         checked = fontItalic,
                         onCheckedChange = onFontItalicChange
                     )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
                         title = stringResource(id = R.string.title_center_lyric),
                         checked = centerLyric,
@@ -141,8 +126,34 @@ fun LazyListScope.basicSections(
             }
         }
     }
+}
 
-    item {
+fun LazyListScope.lyricScrollSections(
+    lyricMode: Int,
+    marqueeMode: Boolean,
+    onMarqueeModeChange: (Boolean) -> Unit,
+    marqueeSpeed: Int,
+    onMarqueeSpeedClick: () -> Unit,
+    marqueeDelay: Int,
+    onMarqueeDelayClick: () -> Unit,
+    marqueeInfinite: Boolean,
+    onMarqueeInfiniteChange: (Boolean) -> Unit,
+    marqueeLoop: Int,
+    onMarqueeLoopClick: () -> Unit,
+    marqueeStopEnd: Boolean,
+    onMarqueeStopEndChange: (Boolean) -> Unit,
+    marqueeMetadataMode: Boolean,
+    onMarqueeMetadataModeChange: (Boolean) -> Unit,
+    marqueeMetadataSpeed: Int,
+    onMarqueeMetadataSpeedClick: () -> Unit,
+    marqueeMetadataDelay: Int,
+    onMarqueeMetadataDelayClick: () -> Unit,
+    marqueeMetadataInfinite: Boolean,
+    onMarqueeMetadataInfiniteChange: (Boolean) -> Unit,
+    marqueeMetadataLoopDelay: Int,
+    onMarqueeMetadataLoopClick: () -> Unit
+) {
+    item(key = "lyric_scroll") {
         Column {
             SmallTitle(text = stringResource(id = R.string.title_marquee))
             Card(modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp).fillMaxWidth()) {
@@ -156,20 +167,52 @@ fun LazyListScope.basicSections(
                     Column {
                         ArrowPreference(
                             title = stringResource(id = R.string.title_marquee_speed),
-                            endActions = { Text("$marqueeSpeed", fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) },
+                            endActions = {
+                                Text(
+                                    "$marqueeSpeed",
+                                    fontSize = MiuixTheme.textStyles.body2.fontSize,
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantActions
+                                )
+                            },
                             onClick = onMarqueeSpeedClick
                         )
-                        ArrowPreference(title = stringResource(id = R.string.title_marquee_delay), endActions = { Text(stringResource(id = R.string.format_ms, marqueeDelay), fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) }, onClick = onMarqueeDelayClick )
-                        SwitchPreference(title = stringResource(id = R.string.title_infinite_loop), checked = marqueeInfinite, onCheckedChange = onMarqueeInfiniteChange)
-                        ArrowPreference(title = stringResource(id = R.string.title_marquee_loop), endActions = { Text(stringResource(id = R.string.format_ms, marqueeLoop), fontSize = MiuixTheme.textStyles.body2.fontSize, color = MiuixTheme.colorScheme.onSurfaceVariantActions) }, onClick = onMarqueeLoopClick )
-                        SwitchPreference(title = stringResource(id = R.string.title_stop_at_end), checked = marqueeStopEnd, onCheckedChange = onMarqueeStopEndChange)
+                        ArrowPreference(
+                            title = stringResource(id = R.string.title_marquee_delay),
+                            endActions = {
+                                Text(
+                                    stringResource(id = R.string.format_ms, marqueeDelay),
+                                    fontSize = MiuixTheme.textStyles.body2.fontSize,
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantActions
+                                )
+                            },
+                            onClick = onMarqueeDelayClick
+                        )
+                        SwitchPreference(
+                            title = stringResource(id = R.string.title_infinite_loop),
+                            checked = marqueeInfinite,
+                            onCheckedChange = onMarqueeInfiniteChange
+                        )
+                        ArrowPreference(
+                            title = stringResource(id = R.string.title_marquee_loop),
+                            endActions = {
+                                Text(
+                                    stringResource(id = R.string.format_ms, marqueeLoop),
+                                    fontSize = MiuixTheme.textStyles.body2.fontSize,
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantActions
+                                )
+                            },
+                            onClick = onMarqueeLoopClick
+                        )
+                        SwitchPreference(
+                            title = stringResource(id = R.string.title_stop_at_end),
+                            checked = marqueeStopEnd,
+                            onCheckedChange = onMarqueeStopEndChange
+                        )
                     }
                 }
                 AnimatedVisibility(visible = lyricMode == 0) {
                     Column {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                         SwitchPreference(
                             title = stringResource(id = R.string.title_marquee_metadata_mode),
                             summary = stringResource(id = R.string.summary_marquee_metadata_mode),
@@ -194,10 +237,7 @@ fun LazyListScope.basicSections(
                                     onClick = onMarqueeMetadataDelayClick,
                                     endActions = {
                                         Text(
-                                            stringResource(
-                                                id = R.string.format_ms,
-                                                marqueeMetadataDelay
-                                            ),
+                                            stringResource(id = R.string.format_ms, marqueeMetadataDelay),
                                             fontSize = MiuixTheme.textStyles.body2.fontSize,
                                             color = MiuixTheme.colorScheme.onSurfaceVariantActions
                                         )
@@ -213,10 +253,7 @@ fun LazyListScope.basicSections(
                                     onClick = onMarqueeMetadataLoopClick,
                                     endActions = {
                                         Text(
-                                            stringResource(
-                                                id = R.string.format_ms,
-                                                marqueeMetadataLoopDelay
-                                            ),
+                                            stringResource(id = R.string.format_ms, marqueeMetadataLoopDelay),
                                             fontSize = MiuixTheme.textStyles.body2.fontSize,
                                             color = MiuixTheme.colorScheme.onSurfaceVariantActions
                                         )
