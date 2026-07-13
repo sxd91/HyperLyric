@@ -291,6 +291,8 @@
     <string name="label_right_padding">右边距</string>
     <string name="title_audio_cover">音频封面</string>
     <string name="title_audio_rhythm">音频律动</string>
+    <string name="title_audio_rhythm_cover_color">音频律动封面色</string>
+    <string name="title_audio_rhythm_gradient_color">音频律动封面渐变色</string>
     <string name="title_super_island_left">超级岛左侧</string>
     <string name="title_super_island_right">超级岛右侧</string>
     <string name="option_content_none">无内容</string>
@@ -308,6 +310,7 @@
     <string name="title_glow_cover_color">边缘光效封面色</string>
     <string name="title_island_progress_glow">边缘光效进度条</string>
     <string name="title_island_progress_style">进度轨道样式</string>
+    <string name="title_island_progress_gradient">边缘光效进度条封面渐变色</string>
     <string name="option_island_progress_top_clockwise">上方起点（顺时针）</string>
     <string name="option_island_progress_right_clockwise">右侧起点（顺时针）</string>
     <string name="option_island_progress_bottom_clockwise">下方起点（顺时针）</string>

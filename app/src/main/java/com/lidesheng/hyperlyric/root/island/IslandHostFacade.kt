@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.view.ViewGroup
 import com.lidesheng.hyperlyric.common.RootConstants
+import com.lidesheng.hyperlyric.common.media.MediaMetadataHelper
 import com.lidesheng.hyperlyric.root.HookIslandGlow
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 
@@ -72,7 +73,29 @@ internal object IslandHostFacade {
         HookIslandGlow.updateMusicGlow(rootView, albumArt, prefs)
     }
 
-    fun updateProgressGlow(rootView: ViewGroup, packageName: String, prefs: SharedPreferences) {
-        IslandProgressGlowController.update(rootView, packageName, prefs)
+    fun updateMusicWaveColors(
+        rootView: ViewGroup,
+        packageName: String,
+        mediaInfo: MediaMetadataHelper.MediaInfo,
+        prefs: SharedPreferences
+    ) {
+        IslandMusicWaveColorHooker.update(rootView, packageName, mediaInfo, prefs)
+    }
+
+    fun updateProgressGlow(
+        rootView: ViewGroup,
+        packageName: String,
+        mediaInfo: MediaMetadataHelper.MediaInfo,
+        prefs: SharedPreferences
+    ) {
+        IslandProgressGlowController.update(rootView, packageName, mediaInfo, prefs)
+    }
+
+    fun updateProgressGlow(
+        rootView: ViewGroup,
+        packageName: String,
+        prefs: SharedPreferences
+    ) {
+        IslandProgressGlowController.update(rootView, packageName, null, prefs)
     }
 }

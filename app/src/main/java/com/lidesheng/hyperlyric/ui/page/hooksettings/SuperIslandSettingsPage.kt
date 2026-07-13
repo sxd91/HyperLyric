@@ -58,6 +58,8 @@ fun SuperIslandSettingsPage() {
     val lyricMode by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_LYRIC_MODE, RootConstants.DEFAULT_HOOK_LYRIC_MODE)) }
     var audioCover by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_ISLAND_LEFT_ALBUM, RootConstants.DEFAULT_HOOK_ISLAND_LEFT_ALBUM)) }
     var audioRhythm by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_ISLAND_RIGHT_ICON, RootConstants.DEFAULT_HOOK_ISLAND_RIGHT_ICON)) }
+    var optimizeMusicWaveColor by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_ISLAND_MUSIC_WAVE_COLOR, RootConstants.DEFAULT_HOOK_ISLAND_MUSIC_WAVE_COLOR)) }
+    var musicWaveGradient by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_ISLAND_MUSIC_WAVE_GRADIENT, RootConstants.DEFAULT_HOOK_ISLAND_MUSIC_WAVE_GRADIENT)) }
     var leftPaddingLeft by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_LEFT_PADDING_LEFT, RootConstants.DEFAULT_HOOK_ISLAND_LEFT_PADDING_LEFT)) }
     var leftPaddingRight by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_LEFT_PADDING_RIGHT, RootConstants.DEFAULT_HOOK_ISLAND_LEFT_PADDING_RIGHT)) }
     var rightPaddingLeft by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_RIGHT_PADDING_LEFT, RootConstants.DEFAULT_HOOK_ISLAND_RIGHT_PADDING_LEFT)) }
@@ -67,6 +69,7 @@ fun SuperIslandSettingsPage() {
     var afterPauseBehavior by remember { mutableIntStateOf(prefs.getInt(RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE, RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE)) }
     var extractGlowColor by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_ISLAND_GLOW_EXTRACT_COLOR, RootConstants.DEFAULT_HOOK_ISLAND_GLOW_EXTRACT_COLOR)) }
     var progressGlow by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_ISLAND_PROGRESS_GLOW, RootConstants.DEFAULT_HOOK_ISLAND_PROGRESS_GLOW)) }
+    var progressGradient by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_ISLAND_PROGRESS_GRADIENT, RootConstants.DEFAULT_HOOK_ISLAND_PROGRESS_GRADIENT)) }
     var progressStyle by remember {
         mutableIntStateOf(
             prefs.getInt(
@@ -199,42 +202,70 @@ fun SuperIslandSettingsPage() {
                     }
                 }
                 item(key = "content_title") { SmallTitle(text = stringResource(id = R.string.title_content)) }
-                item(key = "content_options") {
+                item(key = "media_components") {
                     Card(modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp).fillMaxWidth()) {
                         Column {
                             SwitchPreference(title = stringResource(id = R.string.title_audio_cover), checked = audioCover, onCheckedChange = { audioCover = it; saveConfig(RootConstants.KEY_HOOK_ISLAND_LEFT_ALBUM, it) })
                             SwitchPreference(title = stringResource(id = R.string.title_audio_rhythm), checked = audioRhythm, onCheckedChange = { audioRhythm = it; saveConfig(RootConstants.KEY_HOOK_ISLAND_RIGHT_ICON, it) })
-                            AnimatedVisibility(visible = lyricMode == 0) {
+                            AnimatedVisibility(visible = audioRhythm) {
                                 Column {
-                                    OverlayDropdownPreference(
-                                        title = stringResource(id = R.string.title_super_island_left),
-                                        items = contentOptions,
-                                        selectedIndex = islandContentLeft,
-                                        onSelectedIndexChange = {
-                                            islandContentLeft = it; saveConfig(
-                                            RootConstants.KEY_HOOK_ISLAND_CONTENT_LEFT,
-                                            it
-                                            )
+                                    SwitchPreference(
+                                        title = stringResource(id = R.string.title_audio_rhythm_cover_color),
+                                        checked = optimizeMusicWaveColor,
+                                        onCheckedChange = {
+                                            optimizeMusicWaveColor = it
+                                            saveConfig(RootConstants.KEY_HOOK_ISLAND_MUSIC_WAVE_COLOR, it)
                                         }
                                     )
-                                    OverlayDropdownPreference(
-                                        title = stringResource(id = R.string.title_super_island_right),
-                                        items = contentOptions,
-                                        selectedIndex = islandContentRight,
-                                        onSelectedIndexChange = {
-                                            islandContentRight = it; saveConfig(
-                                            RootConstants.KEY_HOOK_ISLAND_CONTENT_RIGHT,
-                                            it
+                                    AnimatedVisibility(visible = optimizeMusicWaveColor) {
+                                        Column {
+                                            SwitchPreference(
+                                                title = stringResource(id = R.string.title_audio_rhythm_gradient_color),
+                                                checked = musicWaveGradient,
+                                                onCheckedChange = {
+                                                    musicWaveGradient = it
+                                                    saveConfig(RootConstants.KEY_HOOK_ISLAND_MUSIC_WAVE_GRADIENT, it)
+                                                }
                                             )
                                         }
-                                    )
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                if (lyricMode == 0) {
+                    item(key = "content_options") {
+                        Card(modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp).fillMaxWidth()) {
+                            Column {
+                                OverlayDropdownPreference(
+                                    title = stringResource(id = R.string.title_super_island_left),
+                                    items = contentOptions,
+                                    selectedIndex = islandContentLeft,
+                                    onSelectedIndexChange = {
+                                        islandContentLeft = it; saveConfig(
+                                        RootConstants.KEY_HOOK_ISLAND_CONTENT_LEFT,
+                                        it
+                                        )
+                                    }
+                                )
+                                OverlayDropdownPreference(
+                                    title = stringResource(id = R.string.title_super_island_right),
+                                    items = contentOptions,
+                                    selectedIndex = islandContentRight,
+                                    onSelectedIndexChange = {
+                                        islandContentRight = it; saveConfig(
+                                        RootConstants.KEY_HOOK_ISLAND_CONTENT_RIGHT,
+                                        it
+                                        )
+                                    }
+                                )
+                                }
+                        }
+                    }
+                }
                 item(key = "special_features_title") { SmallTitle(text = stringResource(id = R.string.title_special_features)) }
-                item(key = "special_features_content") {
+                item(key = "playback_behavior") {
                     Card(modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp).fillMaxWidth()) {
                         Column {
                             OverlayDropdownPreference(
@@ -248,6 +279,12 @@ fun SuperIslandSettingsPage() {
                                     )
                                 }
                             )
+                        }
+                    }
+                }
+                item(key = "edge_glow") {
+                    Card(modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp).fillMaxWidth()) {
+                        Column {
                             SwitchPreference(
                                 title = stringResource(id = R.string.title_glow_cover_color),
                                 checked = extractGlowColor,
@@ -272,6 +309,21 @@ fun SuperIslandSettingsPage() {
                                             )
                                         }
                                     )
+                                    AnimatedVisibility(visible = extractGlowColor) {
+                                        Column {
+                                            SwitchPreference(
+                                                title = stringResource(id = R.string.title_island_progress_gradient),
+                                                checked = progressGradient,
+                                                onCheckedChange = {
+                                                    progressGradient = it
+                                                    saveConfig(
+                                                        RootConstants.KEY_HOOK_ISLAND_PROGRESS_GRADIENT,
+                                                        it
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

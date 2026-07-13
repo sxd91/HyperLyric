@@ -10,6 +10,14 @@ object ChangelogData {
     fun getChangelog(): List<ChangelogItem> {
         return listOf(
             ChangelogItem(
+                version = "6.3-1934",
+                title = "xxx",
+                summary = "- 新增“边缘光效进度条”功能\n" +
+                        "- 新增“音频律动封面色”功能\n" +
+                        "- 修复了一些错误\n" +
+                        "- xxx"
+            ),
+            ChangelogItem(
                 version = "6.2-1933",
                 title = "晚上好",
                 summary = "- miuix 更新至0.9.3\n" +

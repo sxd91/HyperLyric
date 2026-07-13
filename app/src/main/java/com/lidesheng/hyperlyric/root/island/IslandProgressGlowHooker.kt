@@ -2,10 +2,12 @@ package com.lidesheng.hyperlyric.root.island
 
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PathMeasure
 import android.graphics.RectF
+import android.graphics.Shader
 import android.view.View
 import com.lidesheng.hyperlyric.common.RootConstants
 import com.lidesheng.hyperlyric.root.utils.HookLogger
@@ -63,7 +65,8 @@ internal object IslandProgressGlowHooker {
     fun setMediaProgress(
         backgroundView: View,
         fraction: Float,
-        progressColor: Int,
+        progressStartColor: Int,
+        progressEndColor: Int,
         trackColor: Int,
         progressStyle: Int
     ) {
@@ -73,7 +76,8 @@ internal object IslandProgressGlowHooker {
             }
         }
         state.fraction = fraction.coerceIn(0f, 1f)
-        state.progressColor = progressColor
+        state.progressStartColor = progressStartColor
+        state.progressEndColor = progressEndColor
         state.trackColor = trackColor
         state.progressStyle = progressStyle
         backgroundView.invalidate()
@@ -142,13 +146,22 @@ internal object IslandProgressGlowHooker {
         var fraction: Float = 0f
 
         @Volatile
-        var progressColor: Int = DEFAULT_PROGRESS_COLOR
+        var progressStartColor: Int = DEFAULT_PROGRESS_COLOR
+
+        @Volatile
+        var progressEndColor: Int = DEFAULT_PROGRESS_COLOR
 
         @Volatile
         var trackColor: Int = DEFAULT_TRACK_COLOR
 
         @Volatile
         var progressStyle: Int = RootConstants.DEFAULT_HOOK_ISLAND_PROGRESS_STYLE
+
+        private var progressShader: LinearGradient? = null
+        private var shaderLeft = Float.NaN
+        private var shaderRight = Float.NaN
+        private var shaderStartColor = 0
+        private var shaderEndColor = 0
 
         fun draw(canvas: Canvas) {
             val nativeStroke = (strokeWidth.invokeInt() ?: return).toFloat()
@@ -208,11 +221,7 @@ internal object IslandProgressGlowHooker {
             trackPaint.strokeWidth = drawStroke
             trackPaint.color = trackColor
             progressPaint.strokeWidth = drawStroke
-            progressPaint.color = Color.rgb(
-                Color.red(progressColor),
-                Color.green(progressColor),
-                Color.blue(progressColor)
-            )
+            updateProgressPaint(pathLeft, pathRight)
             progressPaint.alpha = PROGRESS_ALPHA
 
             canvas.drawPath(trackPath, trackPaint)
@@ -238,6 +247,44 @@ internal object IslandProgressGlowHooker {
                 )
             }
             canvas.drawPath(progressPath, progressPaint)
+        }
+
+        private fun updateProgressPaint(pathLeft: Float, pathRight: Float) {
+            val startColor = opaque(progressStartColor)
+            val endColor = opaque(progressEndColor)
+            if (startColor == endColor) {
+                progressPaint.shader = null
+                progressPaint.color = startColor
+                return
+            }
+
+            if (
+                progressShader == null ||
+                shaderLeft != pathLeft ||
+                shaderRight != pathRight ||
+                shaderStartColor != startColor ||
+                shaderEndColor != endColor
+            ) {
+                progressShader = LinearGradient(
+                    pathLeft,
+                    0f,
+                    pathRight,
+                    0f,
+                    intArrayOf(startColor, startColor, endColor),
+                    floatArrayOf(0f, PROGRESS_MAIN_COLOR_STOP, 1f),
+                    Shader.TileMode.CLAMP
+                )
+                shaderLeft = pathLeft
+                shaderRight = pathRight
+                shaderStartColor = startColor
+                shaderEndColor = endColor
+            }
+            progressPaint.color = Color.WHITE
+            progressPaint.shader = progressShader
+        }
+
+        private fun opaque(color: Int): Int {
+            return Color.rgb(Color.red(color), Color.green(color), Color.blue(color))
         }
 
         private fun Method.invokeInt(): Int? {
@@ -308,6 +355,7 @@ internal object IslandProgressGlowHooker {
     private const val DEFAULT_TRACK_COLOR = 0x66757575
     private const val PROGRESS_ALPHA = 255
     private const val STROKE_WIDTH_RATIO = 1f
+    private const val PROGRESS_MAIN_COLOR_STOP = 0.7f
     private const val LEFT_START_FRACTION = 0.75f
     private const val EDGE_OVERLAP_PX = 0.5f
     private const val ISLAND_DIMEN_CLASS = "miui.systemui.dynamicisland.R\$dimen"

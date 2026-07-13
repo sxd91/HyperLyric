@@ -210,8 +210,9 @@ object BaseIslandRenderer : IslandRenderer {
         config: IslandSlotRuntimeConfig
     ) {
         val mediaInfo = MediaMetadataHelper.getMediaInfo(cv.context, packageName, HookLogger)
+        IslandHostFacade.updateMusicWaveColors(cv, packageName, mediaInfo, prefs)
         IslandHostFacade.updateHostGlow(cv, mediaInfo.albumArt, prefs)
-        IslandHostFacade.updateProgressGlow(cv, packageName, prefs)
+        IslandHostFacade.updateProgressGlow(cv, packageName, mediaInfo, prefs)
         updateSlot(cv, IslandProbeUtils.LEFT_TEST_VIEW_TAG, config.leftMode, prefs, config, mediaInfo)
         updateSlot(cv, IslandProbeUtils.RIGHT_TEST_VIEW_TAG, config.rightMode, prefs, config, mediaInfo)
     }

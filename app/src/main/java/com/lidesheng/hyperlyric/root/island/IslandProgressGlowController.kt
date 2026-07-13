@@ -17,9 +17,14 @@ internal object IslandProgressGlowController {
     private val backgroundViewsByRoot = WeakHashMap<ViewGroup, View>()
     private val diagnosticStageByRoot = WeakHashMap<ViewGroup, DiagnosticStage>()
 
-    fun update(rootView: ViewGroup, packageName: String, prefs: SharedPreferences) {
+    fun update(
+        rootView: ViewGroup,
+        packageName: String,
+        mediaInfo: MediaMetadataHelper.MediaInfo?,
+        prefs: SharedPreferences
+    ) {
         runCatching {
-            updateInternal(rootView, packageName, prefs)
+            updateInternal(rootView, packageName, mediaInfo, prefs)
         }.onFailure { e ->
             clear(rootView)
             HookLogger.e(TAG, "Failed to update island background progress", e)
@@ -29,6 +34,7 @@ internal object IslandProgressGlowController {
     private fun updateInternal(
         rootView: ViewGroup,
         packageName: String,
+        mediaInfo: MediaMetadataHelper.MediaInfo?,
         prefs: SharedPreferences
     ) {
         if (!prefs.getBoolean(
@@ -64,7 +70,7 @@ internal object IslandProgressGlowController {
         }
         replaceBackgroundView(rootView, backgroundView)
 
-        val colors = resolveProgressColors(prefs)
+        val colors = resolveProgressColors(prefs, packageName, mediaInfo)
         val progressStyle = prefs.getInt(
             RootConstants.KEY_HOOK_ISLAND_PROGRESS_STYLE,
             RootConstants.DEFAULT_HOOK_ISLAND_PROGRESS_STYLE
@@ -72,7 +78,8 @@ internal object IslandProgressGlowController {
         IslandProgressGlowHooker.setMediaProgress(
             backgroundView,
             playbackProgress.fraction,
-            colors.progress,
+            colors.progressStart,
+            colors.progressEnd,
             colors.track,
             progressStyle
         )
@@ -81,7 +88,8 @@ internal object IslandProgressGlowController {
             DiagnosticStage.BACKGROUND_REGISTERED,
             "Native background registered: package=$packageName " +
                 "progress=${playbackProgress.fraction} " +
-                "progressColor=${colors.progress.toUInt().toString(16)} " +
+                "progressStart=${colors.progressStart.toUInt().toString(16)} " +
+                "progressEnd=${colors.progressEnd.toUInt().toString(16)} " +
                 "trackColor=${colors.track.toUInt().toString(16)} " +
                 "style=$progressStyle"
         )
@@ -121,21 +129,58 @@ internal object IslandProgressGlowController {
         }
     }
 
-    private fun resolveProgressColors(prefs: SharedPreferences): ProgressColors {
+    private fun resolveProgressColors(
+        prefs: SharedPreferences,
+        packageName: String,
+        mediaInfo: MediaMetadataHelper.MediaInfo?
+    ): ProgressColors {
         if (!prefs.getBoolean(
                 RootConstants.KEY_HOOK_ISLAND_GLOW_EXTRACT_COLOR,
                 RootConstants.DEFAULT_HOOK_ISLAND_GLOW_EXTRACT_COLOR
             )
         ) {
-            return ProgressColors(DEFAULT_PROGRESS_COLOR, DEFAULT_TRACK_COLOR)
+            return ProgressColors(
+                DEFAULT_PROGRESS_COLOR,
+                DEFAULT_PROGRESS_COLOR,
+                DEFAULT_TRACK_COLOR
+            )
         }
-        val palette = CoverColorHelper.getCachedColors()
-            ?: return ProgressColors(DEFAULT_PROGRESS_COLOR, DEFAULT_TRACK_COLOR)
+
+        val useGradient = prefs.getBoolean(
+            RootConstants.KEY_HOOK_ISLAND_PROGRESS_GRADIENT,
+            RootConstants.DEFAULT_HOOK_ISLAND_PROGRESS_GRADIENT
+        )
+        val mediaColorKey = mediaInfo?.let {
+            CoverColorHelper.updateMediaSession(
+                packageName = packageName,
+                title = it.title,
+                artist = it.artist,
+                album = it.album
+            )
+        } ?: CoverColorHelper.currentMediaKey()
+        val palette = mediaInfo?.albumArt?.let {
+            CoverColorHelper.extractColors(it, useGradient, mediaColorKey)
+        } ?: CoverColorHelper.getCachedColors(useGradient, mediaColorKey)
+            ?: return ProgressColors(
+                DEFAULT_PROGRESS_COLOR,
+                DEFAULT_PROGRESS_COLOR,
+                DEFAULT_TRACK_COLOR
+            )
         val highlight = palette.second.firstOrNull()
-            ?: return ProgressColors(DEFAULT_PROGRESS_COLOR, DEFAULT_TRACK_COLOR)
+            ?: return ProgressColors(
+                DEFAULT_PROGRESS_COLOR,
+                DEFAULT_PROGRESS_COLOR,
+                DEFAULT_TRACK_COLOR
+            )
+        val highlightEnd = if (useGradient) {
+            palette.second.getOrNull(1) ?: highlight
+        } else {
+            highlight
+        }
         val highlightBackground = palette.first.firstOrNull() ?: highlight
         return ProgressColors(
-            progress = highlight,
+            progressStart = highlight,
+            progressEnd = highlightEnd,
             track = withAlpha(highlightBackground, COVER_TRACK_ALPHA)
         )
     }
@@ -164,7 +209,8 @@ internal object IslandProgressGlowController {
     }
 
     private data class ProgressColors(
-        val progress: Int,
+        val progressStart: Int,
+        val progressEnd: Int,
         val track: Int
     )
 
