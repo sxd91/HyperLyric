@@ -77,46 +77,22 @@ jobs:
         if: steps.gate.outputs.skip != 'true'
         run: chmod +x gradlew
 
+      # ⚠️ 修改点：构建 Debug 变体（自动使用 debug 签名）
       - name: 构建 Build
         if: steps.gate.outputs.skip != 'true'
-        run: ./gradlew assembleOnlineRelease assembleOfflineRelease --build-cache
+        run: ./gradlew assembleOnlineDebug assembleOfflineDebug --build-cache
 
+      # pull_request 上传 Debug APK（路径也改为 debug）
       - name: 上传 Debug APK Upload Debug Artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v7
         with:
           name: debug-apks
-          path: app/build/outputs/apk/**/*.apk
+          path: app/build/outputs/apk/**/debug/*.apk   # 改为 debug 目录
           if-no-files-found: error
 
-      - name: 解码签名密钥 Decode Keystore
-        if: github.event_name != 'pull_request' && steps.gate.outputs.skip == 'false'
-        env:
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-        run: echo "$SIGNING_KEY" | base64 -d > release.jks
-
-      - name: 签名 Sign APKs
-        if: github.event_name != 'pull_request' && steps.gate.outputs.skip == 'false'
-        env:
-          STORE_PASS: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ALIAS }}
-        run: |
-          BTDIR="$ANDROID_SDK_ROOT/build-tools/34.0.0"
-          ZA="$BTDIR/zipalign"
-          AS="$BTDIR/apksigner"
-
-          V_NAME="${{ steps.gate.outputs.name }}"
-
-          # online
-          ONLINE_IN=$(echo app/build/outputs/apk/online/release/*.apk)
-          $ZA -v -p 4 $ONLINE_IN online-aligned.apk
-          $AS sign --ks release.jks --ks-pass env:STORE_PASS --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS --out HyperLyric-v${V_NAME}-online.apk online-aligned.apk
-
-          # offline
-          OFFLINE_IN=$(echo app/build/outputs/apk/offline/release/*.apk)
-          $ZA -v -p 4 $OFFLINE_IN offline-aligned.apk
-          $AS sign --ks release.jks --ks-pass env:STORE_PASS --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS --out HyperLyric-v${V_NAME}-offline.apk offline-aligned.apk
+      # ❌ 已移除：解码签名密钥（整个 step 删除）
+      # ❌ 已移除：签名 Sign APKs（整个 step 删除）
 
       - name: 生成发布说明 Generate Release Body
         if: github.event_name != 'pull_request' && steps.gate.outputs.skip == 'false'
@@ -131,6 +107,7 @@ jobs:
           fi
           echo "EOF" >> $GITHUB_OUTPUT
 
+      # ⚠️ 修改点：发布文件改为 Debug 变体的 APK（未签名的 release 无法构建，所以用 debug）
       - name: 创建发布 Create Release
         if: github.event_name != 'pull_request' && steps.gate.outputs.skip == 'false'
         uses: softprops/action-gh-release@v2
@@ -142,7 +119,7 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: |
-            HyperLyric-v${{ steps.gate.outputs.name }}-online.apk
-            HyperLyric-v${{ steps.gate.outputs.name }}-offline.apk
+            app/build/outputs/apk/online/debug/*.apk
+            app/build/outputs/apk/offline/debug/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
