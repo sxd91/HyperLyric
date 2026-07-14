@@ -416,6 +416,14 @@ class HookEntry : XposedModule() {
                             NotificationMediaAmbientFlowHooker.refreshCardTheme()
                         }
                     }
+                    RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_STYLE,
+                    RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_BLUR,
+                    RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_COLOR_ANIMATION,
+                    RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_AUTO_INVERT -> {
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            NotificationMediaAmbientFlowHooker.refreshBackgroundStyle()
+                        }
+                    }
                     RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_COVER_STYLE,
                     RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_HIDE_COVER_SOURCE,
                     RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_HIDE_DEVICE_SWITCH -> {

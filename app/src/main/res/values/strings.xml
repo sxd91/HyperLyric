@@ -102,6 +102,7 @@
     <string name="title_super_island">超级岛</string>
     <string name="subtitle_super_island">暂停或切换音乐后生效</string>
     <string name="title_media_cards">媒体卡片</string>
+    <string name="summary_media_cards">重启系统界面后生效</string>
     <string name="title_notification_center_media_card">通知中心媒体卡片</string>
     <string name="title_media_card_background_theme">卡片背景颜色</string>
     <string name="option_media_card_theme_follow_system">跟随系统</string>
@@ -113,6 +114,14 @@
     <string name="option_notification_media_ambient_flow_dynamic">动态流光</string>
     <string name="option_notification_media_ambient_flow_cover_color">动态流光（封面色）</string>
     <string name="option_notification_media_ambient_flow_disabled">禁用（默认）</string>
+    <string name="title_notification_media_background_style">卡片背景样式</string>
+    <string name="option_notification_media_background_default">默认</string>
+    <string name="option_notification_media_background_cover_art">拼贴封面</string>
+    <string name="option_notification_media_background_blurred_cover">模糊封面</string>
+    <string name="option_notification_media_background_radial_gradient">径向渐变</string>
+    <string name="option_notification_media_background_linear_gradient">线性渐变</string>
+    <string name="title_notification_media_background_color_animation">背景切换动画</string>
+    <string name="title_notification_media_background_auto_invert">亮色封面自动反色</string>
     <string name="title_island_expanded_media_card">超级岛展开态媒体卡片</string>
     <string name="title_island_media_ambient_flow_mode">卡片动态流光</string>
     <string name="option_island_media_ambient_flow_default">动态流光（默认）</string>

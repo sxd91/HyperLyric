@@ -55,6 +55,33 @@ fun MediaCardSettingsPage() {
             )
         )
     }
+    var notificationBackgroundStyle by remember {
+        mutableIntStateOf(
+            prefs.getInt(
+                RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_STYLE,
+                RootConstants.DEFAULT_HOOK_NOTIFICATION_MEDIA_BACKGROUND_STYLE
+            ).coerceIn(
+                RootConstants.NOTIFICATION_MEDIA_BACKGROUND_STYLE_DEFAULT,
+                RootConstants.NOTIFICATION_MEDIA_BACKGROUND_STYLE_LINEAR_GRADIENT
+            )
+        )
+    }
+    var notificationBackgroundColorAnimation by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_COLOR_ANIMATION,
+                RootConstants.DEFAULT_HOOK_NOTIFICATION_MEDIA_BACKGROUND_COLOR_ANIMATION
+            )
+        )
+    }
+    var notificationBackgroundAutoInvert by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_AUTO_INVERT,
+                RootConstants.DEFAULT_HOOK_NOTIFICATION_MEDIA_BACKGROUND_AUTO_INVERT
+            )
+        )
+    }
     var islandExpandedAmbientFlowMode by remember {
         mutableIntStateOf(
             prefs.getInt(
@@ -154,6 +181,7 @@ fun MediaCardSettingsPage() {
                 TopAppBar(
                     color = barColor,
                     title = stringResource(R.string.title_media_cards),
+                    subtitle = stringResource(R.string.summary_media_cards),
                     scrollBehavior = topAppBarScrollBehavior,
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
@@ -236,6 +264,48 @@ fun MediaCardSettingsPage() {
                         PrefsBridge.putBoolean(
                             RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_HIDE_DEVICE_SWITCH,
                             hidden
+                        )
+                    },
+                    backgroundStyle = notificationBackgroundStyle,
+                    onBackgroundStyleChange = { style ->
+                        notificationBackgroundStyle = style
+                        prefs.edit {
+                            putInt(
+                                RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_STYLE,
+                                style
+                            )
+                        }
+                        PrefsBridge.putInt(
+                            RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_STYLE,
+                            style
+                        )
+                    },
+                    backgroundColorAnimation = notificationBackgroundColorAnimation,
+                    onBackgroundColorAnimationChange = { enabled ->
+                        notificationBackgroundColorAnimation = enabled
+                        prefs.edit {
+                            putBoolean(
+                                RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_COLOR_ANIMATION,
+                                enabled
+                            )
+                        }
+                        PrefsBridge.putBoolean(
+                            RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_COLOR_ANIMATION,
+                            enabled
+                        )
+                    },
+                    backgroundAutoInvert = notificationBackgroundAutoInvert,
+                    onBackgroundAutoInvertChange = { enabled ->
+                        notificationBackgroundAutoInvert = enabled
+                        prefs.edit {
+                            putBoolean(
+                                RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_AUTO_INVERT,
+                                enabled
+                            )
+                        }
+                        PrefsBridge.putBoolean(
+                            RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_AUTO_INVERT,
+                            enabled
                         )
                     },
                     ambientFlowMode = notificationAmbientFlowMode,

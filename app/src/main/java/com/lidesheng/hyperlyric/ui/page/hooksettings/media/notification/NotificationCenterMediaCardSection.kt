@@ -22,6 +22,12 @@ fun LazyListScope.notificationCenterMediaCardSection(
     onHideCoverSourceChange: (Boolean) -> Unit,
     hideDeviceSwitch: Boolean,
     onHideDeviceSwitchChange: (Boolean) -> Unit,
+    backgroundStyle: Int,
+    onBackgroundStyleChange: (Int) -> Unit,
+    backgroundColorAnimation: Boolean,
+    onBackgroundColorAnimationChange: (Boolean) -> Unit,
+    backgroundAutoInvert: Boolean,
+    onBackgroundAutoInvertChange: (Boolean) -> Unit,
     ambientFlowMode: Int,
     onAmbientFlowModeChange: (Int) -> Unit
 ) {
@@ -62,6 +68,42 @@ fun LazyListScope.notificationCenterMediaCardSection(
                 checked = hideDeviceSwitch,
                 onCheckedChange = onHideDeviceSwitchChange
             )
+            val backgroundStyleValues = listOf(
+                RootConstants.NOTIFICATION_MEDIA_BACKGROUND_STYLE_DEFAULT,
+                RootConstants.NOTIFICATION_MEDIA_BACKGROUND_STYLE_COVER_ART,
+                RootConstants.NOTIFICATION_MEDIA_BACKGROUND_STYLE_BLURRED_COVER,
+                RootConstants.NOTIFICATION_MEDIA_BACKGROUND_STYLE_RADIAL_GRADIENT,
+                RootConstants.NOTIFICATION_MEDIA_BACKGROUND_STYLE_LINEAR_GRADIENT
+            )
+            OverlayDropdownPreference(
+                title = stringResource(R.string.title_notification_media_background_style),
+                items = listOf(
+                    stringResource(R.string.option_notification_media_background_default),
+                    stringResource(R.string.option_notification_media_background_cover_art),
+                    stringResource(R.string.option_notification_media_background_blurred_cover),
+                    stringResource(R.string.option_notification_media_background_radial_gradient),
+                    stringResource(R.string.option_notification_media_background_linear_gradient)
+                ),
+                selectedIndex = backgroundStyleValues.indexOf(backgroundStyle).coerceAtLeast(0),
+                onSelectedIndexChange = { index ->
+                    onBackgroundStyleChange(backgroundStyleValues[index])
+                }
+            )
+            val customBackground =
+                backgroundStyle != RootConstants.NOTIFICATION_MEDIA_BACKGROUND_STYLE_DEFAULT
+            SwitchPreference(
+                title = stringResource(R.string.title_notification_media_background_color_animation),
+                checked = backgroundColorAnimation,
+                enabled = customBackground,
+                onCheckedChange = onBackgroundColorAnimationChange
+            )
+            SwitchPreference(
+                title = stringResource(R.string.title_notification_media_background_auto_invert),
+                checked = backgroundAutoInvert,
+                enabled = backgroundStyle ==
+                    RootConstants.NOTIFICATION_MEDIA_BACKGROUND_STYLE_LINEAR_GRADIENT,
+                onCheckedChange = onBackgroundAutoInvertChange
+            )
             val themeValues = listOf(
                 RootConstants.MEDIA_CARD_THEME_FOLLOW_SYSTEM,
                 RootConstants.MEDIA_CARD_THEME_ALWAYS_LIGHT,
@@ -75,6 +117,7 @@ fun LazyListScope.notificationCenterMediaCardSection(
                     stringResource(R.string.option_media_card_theme_always_dark)
                 ),
                 selectedIndex = themeValues.indexOf(cardTheme).coerceAtLeast(0),
+                enabled = !customBackground,
                 onSelectedIndexChange = { index ->
                     onCardThemeChange(themeValues[index])
                 }
@@ -92,6 +135,7 @@ fun LazyListScope.notificationCenterMediaCardSection(
                     stringResource(R.string.option_notification_media_ambient_flow_disabled)
                 ),
                 selectedIndex = modeValues.indexOf(ambientFlowMode).coerceAtLeast(0),
+                enabled = !customBackground,
                 onSelectedIndexChange = { index ->
                     onAmbientFlowModeChange(modeValues[index])
                 }

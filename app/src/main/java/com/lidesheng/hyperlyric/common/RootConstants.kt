@@ -31,6 +31,14 @@ object RootConstants {
         "key_hook_notification_media_hide_cover_source"
     const val KEY_HOOK_NOTIFICATION_MEDIA_HIDE_DEVICE_SWITCH =
         "key_hook_notification_media_hide_device_switch"
+    const val KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_STYLE =
+        "key_hook_notification_media_background_style"
+    const val KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_BLUR =
+        "key_hook_notification_media_background_blur"
+    const val KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_COLOR_ANIMATION =
+        "key_hook_notification_media_background_color_animation"
+    const val KEY_HOOK_NOTIFICATION_MEDIA_BACKGROUND_AUTO_INVERT =
+        "key_hook_notification_media_background_auto_invert"
     const val KEY_HOOK_ISLAND_EXPANDED_MEDIA_CARD_THEME =
         "key_hook_island_expanded_media_card_theme"
     const val KEY_HOOK_ISLAND_EXPANDED_MEDIA_COVER_STYLE =
@@ -159,6 +167,17 @@ object RootConstants {
         NOTIFICATION_MEDIA_COVER_STYLE_DEFAULT
     const val DEFAULT_HOOK_NOTIFICATION_MEDIA_HIDE_COVER_SOURCE = false
     const val DEFAULT_HOOK_NOTIFICATION_MEDIA_HIDE_DEVICE_SWITCH = false
+
+    const val NOTIFICATION_MEDIA_BACKGROUND_STYLE_DEFAULT = 0
+    const val NOTIFICATION_MEDIA_BACKGROUND_STYLE_COVER_ART = 1
+    const val NOTIFICATION_MEDIA_BACKGROUND_STYLE_BLURRED_COVER = 2
+    const val NOTIFICATION_MEDIA_BACKGROUND_STYLE_RADIAL_GRADIENT = 3
+    const val NOTIFICATION_MEDIA_BACKGROUND_STYLE_LINEAR_GRADIENT = 4
+    const val DEFAULT_HOOK_NOTIFICATION_MEDIA_BACKGROUND_STYLE =
+        NOTIFICATION_MEDIA_BACKGROUND_STYLE_DEFAULT
+    const val DEFAULT_HOOK_NOTIFICATION_MEDIA_BACKGROUND_BLUR = 10
+    const val DEFAULT_HOOK_NOTIFICATION_MEDIA_BACKGROUND_COLOR_ANIMATION = false
+    const val DEFAULT_HOOK_NOTIFICATION_MEDIA_BACKGROUND_AUTO_INVERT = false
     const val ISLAND_EXPANDED_MEDIA_COVER_STYLE_DEFAULT = 0
     const val ISLAND_EXPANDED_MEDIA_COVER_STYLE_CIRCLE = 1
     const val ISLAND_EXPANDED_MEDIA_COVER_STYLE_ROTATING_CIRCLE = 2

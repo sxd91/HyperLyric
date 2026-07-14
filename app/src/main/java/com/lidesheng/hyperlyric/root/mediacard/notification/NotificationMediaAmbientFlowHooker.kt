@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import com.lidesheng.hyperlyric.common.RootConstants
 import com.lidesheng.hyperlyric.common.color.ColorExtractor
 import com.lidesheng.hyperlyric.root.HookEntry
+import com.lidesheng.hyperlyric.root.mediacard.notification.background.NotificationMediaBackgroundController
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import io.github.libxposed.api.XposedInterface.Chain
 import io.github.libxposed.api.XposedInterface.Hooker
@@ -46,9 +47,8 @@ object NotificationMediaAmbientFlowHooker {
     private val nativeUnavailableClassLoaders = Collections.synchronizedSet(
         Collections.newSetFromMap(WeakHashMap<ClassLoader, Boolean>())
     )
-    private val colorExecutor = Executors.newSingleThreadExecutor { task ->
-        Thread(task, "HyperLyric-MediaColor").apply { isDaemon = true }
-    }
+    @Volatile
+    private var colorExecutor = newColorExecutor()
 
     @Volatile
     private var module: XposedModule? = null
@@ -58,6 +58,8 @@ object NotificationMediaAmbientFlowHooker {
 
     fun initialize(xposedModule: XposedModule) {
         module = xposedModule
+        NotificationMediaBackgroundController.initialize(xposedModule)
+        if (colorExecutor.isShutdown) colorExecutor = newColorExecutor()
     }
 
     fun hook(xposedModule: XposedModule, classLoader: ClassLoader) {
@@ -72,25 +74,43 @@ object NotificationMediaAmbientFlowHooker {
             HookLogger.w(TAG, "Notification center media controller is unavailable")
             return
         }
-        if (resolveNativeApi(classLoader) == null) {
-            hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Native MusicBgView API is unavailable; notification media flow hook skipped")
-            return
-        }
-
         var installed = 0
+        val installedNativeUpdates = mutableSetOf<String>()
         TARGET_METHOD_NAMES
             .flatMap { methodName -> findNearestMethods(controllerClass, methodName) }
+            .filter(::isTargetMethod)
             .forEach { method ->
                 runCatching {
                     method.isAccessible = true
                     xposedModule.deoptimize(method)
                     xposedModule.hook(method).intercept(hookerFor(method) ?: return@runCatching)
                     installed++
+                    if (method.name in NATIVE_BACKGROUND_UPDATE_METHODS) {
+                        installedNativeUpdates.add(method.name)
+                    }
                 }.onFailure { error ->
                     HookLogger.e(TAG, "Failed to hook ${method.name}", error)
                 }
             }
+        NotificationMediaBackgroundController.setNativeHooksAvailable(
+            classLoader,
+            installedNativeUpdates.containsAll(NATIVE_BACKGROUND_UPDATE_METHODS)
+        )
+        if (!installedNativeUpdates.containsAll(NATIVE_BACKGROUND_UPDATE_METHODS)) {
+            HookLogger.w(TAG, "Native media background methods are incomplete; custom background hook skipped")
+        }
+
+        runCatching {
+            val seekBarClass = classLoader.loadClass(HYPER_PROGRESS_SEEK_BAR_CLASS)
+            findNearestMethods(seekBarClass, "onDraw").forEach { method ->
+                method.isAccessible = true
+                xposedModule.deoptimize(method)
+                xposedModule.hook(method).intercept(ProgressDrawHook())
+                installed++
+            }
+        }.onFailure { error ->
+            HookLogger.w(TAG, "Native HyperProgressSeekBar API unavailable: ${error.message}")
+        }
 
         if (installed == 0) {
             hookedClassLoaders.remove(classLoader)
@@ -101,10 +121,14 @@ object NotificationMediaAmbientFlowHooker {
     }
 
     fun isTargetMethod(method: Method): Boolean {
+        if (method.declaringClass.name == HYPER_PROGRESS_SEEK_BAR_CLASS) {
+            return method.name == "onDraw" && method.parameterCount == 1
+        }
         if (!method.declaringClass.name.startsWith(CONTROLLER_PACKAGE)) return false
         return when (method.name) {
             "attach", "detach" -> true
             "bindMediaData" -> method.parameterTypes.isNotEmpty()
+            "updateForegroundColors", "updateMediaBackground" -> method.parameterCount == 0
             else -> false
         }
     }
@@ -116,6 +140,8 @@ object NotificationMediaAmbientFlowHooker {
             "attach" -> ControllerHook(Action.ATTACH)
             "detach" -> ControllerHook(Action.DETACH)
             "bindMediaData" -> ControllerHook(Action.BIND)
+            "updateForegroundColors", "updateMediaBackground" -> NativeBackgroundUpdateHook()
+            "onDraw" -> ProgressDrawHook()
             else -> null
         }
     }
@@ -126,6 +152,7 @@ object NotificationMediaAmbientFlowHooker {
         states.clear()
         activeControllers.clear()
         colorExecutor.shutdownNow()
+        NotificationMediaBackgroundController.releaseAll()
         val cleanup = Runnable {
             controllers.forEach(::restoreCardTheme)
             snapshot.values.forEach(::disposeState)
@@ -147,9 +174,16 @@ object NotificationMediaAmbientFlowHooker {
             if (action == Action.DETACH) {
                 activeControllers.remove(controller)
                 removeView(controller)
+                NotificationMediaBackgroundController.onDetach(controller)
                 restoreCardTheme(controller)
             } else {
-                runCatching { prepareCardTheme(controller) }
+                runCatching {
+                    if (NotificationMediaBackgroundController.isActive(controller)) {
+                        restoreCardTheme(controller)
+                    } else {
+                        prepareCardTheme(controller)
+                    }
+                }
                     .onFailure { HookLogger.e(TAG, "Failed to prepare native media card theme", it) }
             }
             val result = chain.proceed()
@@ -161,6 +195,10 @@ object NotificationMediaAmbientFlowHooker {
                     }
                     Action.BIND -> {
                         activeControllers.add(controller)
+                        NotificationMediaBackgroundController.onBind(
+                            controller,
+                            chain.args.firstOrNull()
+                        )
                         bind(controller, chain.args.firstOrNull())
                     }
                     Action.DETACH -> Unit
@@ -174,6 +212,24 @@ object NotificationMediaAmbientFlowHooker {
 
     enum class Action { ATTACH, DETACH, BIND }
 
+    class NativeBackgroundUpdateHook : Hooker {
+        override fun intercept(chain: Chain): Any? {
+            val controller = chain.thisObject ?: return chain.proceed()
+            return if (NotificationMediaBackgroundController.isActive(controller)) {
+                null
+            } else {
+                chain.proceed()
+            }
+        }
+    }
+
+    class ProgressDrawHook : Hooker {
+        override fun intercept(chain: Chain): Any? {
+            chain.thisObject?.let(NotificationMediaBackgroundController::applySeekBarColor)
+            return chain.proceed()
+        }
+    }
+
     fun refreshCardTheme() {
         val refresh = Runnable {
             val snapshot = synchronized(activeControllers) { activeControllers.toList() }
@@ -186,12 +242,27 @@ object NotificationMediaAmbientFlowHooker {
         else Handler(Looper.getMainLooper()).post(refresh)
     }
 
+    fun refreshBackgroundStyle() {
+        val controllers = synchronized(activeControllers) { activeControllers.toList() }
+        controllers.forEach { controller ->
+            if (NotificationMediaBackgroundController.isActive(controller)) {
+                restoreCardTheme(controller)
+            }
+        }
+        NotificationMediaBackgroundController.refresh(controllers) { controller ->
+            runCatching { refreshCardTheme(controller) }
+                .onFailure { HookLogger.e(TAG, "Failed to restore native media background", it) }
+        }
+        controllers.forEach(::syncView)
+    }
+
     private fun prepareCardTheme(controller: Any) {
         val api = resolveThemeApi(controller.javaClass.classLoader) ?: return
         api.apply(controller, currentCardTheme(), refreshViews = false)
     }
 
     private fun refreshCardTheme(controller: Any) {
+        if (NotificationMediaBackgroundController.isActive(controller)) return
         val api = resolveThemeApi(controller.javaClass.classLoader) ?: return
         api.apply(controller, currentCardTheme(), refreshViews = true)
     }
@@ -211,6 +282,10 @@ object NotificationMediaAmbientFlowHooker {
     }
 
     private fun syncView(controller: Any) {
+        if (NotificationMediaBackgroundController.isActive(controller)) {
+            removeView(controller)
+            return
+        }
         if (currentMode() != RootConstants.NOTIFICATION_MEDIA_AMBIENT_FLOW_MODE_DISABLED) {
             ensureView(controller)
         } else {
@@ -219,6 +294,10 @@ object NotificationMediaAmbientFlowHooker {
     }
 
     private fun bind(controller: Any, mediaData: Any?) {
+        if (NotificationMediaBackgroundController.isActive(controller)) {
+            removeView(controller)
+            return
+        }
         val mode = currentMode()
         if (mode == RootConstants.NOTIFICATION_MEDIA_AMBIENT_FLOW_MODE_DISABLED) {
             removeView(controller)
@@ -453,6 +532,10 @@ object NotificationMediaAmbientFlowHooker {
         val colors: IntArray
     )
 
+    private fun newColorExecutor() = Executors.newSingleThreadExecutor { task ->
+        Thread(task, "HyperLyric-MediaColor").apply { isDaemon = true }
+    }
+
     private class CardThemeApi private constructor(
         private val contextField: Field,
         private val updateForegroundColorsMethod: Method,
@@ -630,5 +713,17 @@ object NotificationMediaAmbientFlowHooker {
 
     private const val CONTROLLER_PACKAGE =
         "com.android.systemui.statusbar.notification.mediacontrol."
-    private val TARGET_METHOD_NAMES = listOf("attach", "detach", "bindMediaData")
+    private val TARGET_METHOD_NAMES = listOf(
+        "attach",
+        "detach",
+        "bindMediaData",
+        "updateForegroundColors",
+        "updateMediaBackground"
+    )
+    private val NATIVE_BACKGROUND_UPDATE_METHODS = setOf(
+        "updateForegroundColors",
+        "updateMediaBackground"
+    )
+    private const val HYPER_PROGRESS_SEEK_BAR_CLASS =
+        "miuix.miuixbasewidget.widget.HyperProgressSeekBar"
 }
