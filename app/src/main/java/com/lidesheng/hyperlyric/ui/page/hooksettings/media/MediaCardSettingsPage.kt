@@ -76,6 +76,17 @@ fun MediaCardSettingsPage() {
             )
         )
     }
+    var notificationCoverStyle by remember {
+        mutableIntStateOf(
+            prefs.getInt(
+                RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_COVER_STYLE,
+                RootConstants.DEFAULT_HOOK_NOTIFICATION_MEDIA_COVER_STYLE
+            ).coerceIn(
+                RootConstants.NOTIFICATION_MEDIA_COVER_STYLE_DEFAULT,
+                RootConstants.NOTIFICATION_MEDIA_COVER_STYLE_HIDDEN
+            )
+        )
+    }
     var islandExpandedCardTheme by remember {
         mutableIntStateOf(
             prefs.getInt(
@@ -142,6 +153,17 @@ fun MediaCardSettingsPage() {
                         PrefsBridge.putInt(
                             RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_CARD_THEME,
                             theme
+                        )
+                    },
+                    coverStyle = notificationCoverStyle,
+                    onCoverStyleChange = { style ->
+                        notificationCoverStyle = style
+                        prefs.edit {
+                            putInt(RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_COVER_STYLE, style)
+                        }
+                        PrefsBridge.putInt(
+                            RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_COVER_STYLE,
+                            style
                         )
                     },
                     ambientFlowMode = notificationAmbientFlowMode,

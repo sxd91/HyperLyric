@@ -13,6 +13,7 @@ import com.lidesheng.hyperlyric.root.island.SystemUIHookRegistry
 import com.lidesheng.hyperlyric.root.island.IslandWidthHooker
 import com.lidesheng.hyperlyric.root.island.RealIslandHooker
 import com.lidesheng.hyperlyric.root.mediacard.notification.NotificationMediaAmbientFlowHooker
+import com.lidesheng.hyperlyric.root.mediacard.notification.NotificationMediaCoverStyleHooker
 import com.lidesheng.hyperlyric.root.mediacard.island.IslandExpandedMediaAmbientFlowHooker
 import com.lidesheng.hyperlyric.root.island.renderer.IslandRenderer
 import com.lidesheng.hyperlyric.root.island.renderer.BaseIslandRenderer
@@ -131,6 +132,7 @@ class HookEntry : XposedModule() {
         }
         param.setSavedInstanceState(state)
         IslandExpandedMediaAmbientFlowHooker.releaseAll()
+        NotificationMediaCoverStyleHooker.releaseAll()
         NotificationMediaAmbientFlowHooker.releaseAll()
         cleanupRuntime()
         HookLogger.i("HookEntry", "热重载准备完成")
@@ -145,6 +147,7 @@ class HookEntry : XposedModule() {
         IslandProgressGlowHooker.initialize(this)
         IslandExpandedMediaAmbientFlowHooker.initialize(this)
         NotificationMediaAmbientFlowHooker.initialize(this)
+        NotificationMediaCoverStyleHooker.initialize(this)
         val hadProgressBackgroundHook = param.oldHookHandles.any {
             isProgressGlowBackgroundDraw(it.executable)
         }
@@ -212,6 +215,11 @@ class HookEntry : XposedModule() {
             }.onFailure { e ->
                 HookLogger.e("HookEntry", "Failed to install notification media ambient flow hook", e)
             }
+            runCatching {
+                NotificationMediaCoverStyleHooker.hook(this, classLoader)
+            }.onFailure { e ->
+                HookLogger.e("HookEntry", "Failed to install notification media cover hook", e)
+            }
         }
         islandExpandedMediaClassLoader?.let { classLoader ->
             runCatching {
@@ -245,6 +253,7 @@ class HookEntry : XposedModule() {
         if (packageName == "com.android.systemui") {
             IslandExpandedMediaAmbientFlowHooker.hook(this, param.defaultClassLoader)
             NotificationMediaAmbientFlowHooker.hook(this, param.defaultClassLoader)
+            NotificationMediaCoverStyleHooker.hook(this, param.defaultClassLoader)
             try {
                 UnlockIslandWhitelist.hook(this, param.defaultClassLoader)
             } catch (e: Exception) {
@@ -372,6 +381,11 @@ class HookEntry : XposedModule() {
                     RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_CARD_THEME -> {
                         android.os.Handler(android.os.Looper.getMainLooper()).post {
                             NotificationMediaAmbientFlowHooker.refreshCardTheme()
+                        }
+                    }
+                    RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_COVER_STYLE -> {
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            NotificationMediaCoverStyleHooker.refresh()
                         }
                     }
                     RootConstants.KEY_HOOK_ISLAND_EXPANDED_MEDIA_CARD_THEME -> {

@@ -25,6 +25,8 @@ object RootConstants {
         "key_hook_island_expanded_media_ambient_flow_mode"
     const val KEY_HOOK_NOTIFICATION_MEDIA_CARD_THEME =
         "key_hook_notification_media_card_theme"
+    const val KEY_HOOK_NOTIFICATION_MEDIA_COVER_STYLE =
+        "key_hook_notification_media_cover_style"
     const val KEY_HOOK_ISLAND_EXPANDED_MEDIA_CARD_THEME =
         "key_hook_island_expanded_media_card_theme"
 
@@ -139,6 +141,12 @@ object RootConstants {
     const val MEDIA_CARD_THEME_ALWAYS_DARK = 2
     const val DEFAULT_HOOK_NOTIFICATION_MEDIA_CARD_THEME = MEDIA_CARD_THEME_FOLLOW_SYSTEM
     const val DEFAULT_HOOK_ISLAND_EXPANDED_MEDIA_CARD_THEME = MEDIA_CARD_THEME_ALWAYS_DARK
+    const val NOTIFICATION_MEDIA_COVER_STYLE_DEFAULT = 0
+    const val NOTIFICATION_MEDIA_COVER_STYLE_CIRCLE = 1
+    const val NOTIFICATION_MEDIA_COVER_STYLE_ROTATING_CIRCLE = 2
+    const val NOTIFICATION_MEDIA_COVER_STYLE_HIDDEN = 3
+    const val DEFAULT_HOOK_NOTIFICATION_MEDIA_COVER_STYLE =
+        NOTIFICATION_MEDIA_COVER_STYLE_DEFAULT
 
 
     const val DEFAULT_HOOK_TEXT_SIZE = 12

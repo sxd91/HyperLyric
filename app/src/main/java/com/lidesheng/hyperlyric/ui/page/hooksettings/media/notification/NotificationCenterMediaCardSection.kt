@@ -15,6 +15,8 @@ import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
 fun LazyListScope.notificationCenterMediaCardSection(
     cardTheme: Int,
     onCardThemeChange: (Int) -> Unit,
+    coverStyle: Int,
+    onCoverStyleChange: (Int) -> Unit,
     ambientFlowMode: Int,
     onAmbientFlowModeChange: (Int) -> Unit
 ) {
@@ -41,6 +43,25 @@ fun LazyListScope.notificationCenterMediaCardSection(
                 selectedIndex = themeValues.indexOf(cardTheme).coerceAtLeast(0),
                 onSelectedIndexChange = { index ->
                     onCardThemeChange(themeValues[index])
+                }
+            )
+            val coverStyleValues = listOf(
+                RootConstants.NOTIFICATION_MEDIA_COVER_STYLE_DEFAULT,
+                RootConstants.NOTIFICATION_MEDIA_COVER_STYLE_CIRCLE,
+                RootConstants.NOTIFICATION_MEDIA_COVER_STYLE_ROTATING_CIRCLE,
+                RootConstants.NOTIFICATION_MEDIA_COVER_STYLE_HIDDEN
+            )
+            OverlayDropdownPreference(
+                title = stringResource(R.string.title_audio_cover_style),
+                items = listOf(
+                    stringResource(R.string.option_audio_cover_style_default),
+                    stringResource(R.string.option_audio_cover_style_circle),
+                    stringResource(R.string.option_audio_cover_style_rotating_circle),
+                    stringResource(R.string.option_audio_cover_style_hidden)
+                ),
+                selectedIndex = coverStyleValues.indexOf(coverStyle).coerceAtLeast(0),
+                onSelectedIndexChange = { index ->
+                    onCoverStyleChange(coverStyleValues[index])
                 }
             )
             val modeValues = listOf(
