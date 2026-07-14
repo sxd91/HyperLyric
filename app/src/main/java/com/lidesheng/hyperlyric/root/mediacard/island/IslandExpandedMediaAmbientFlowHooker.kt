@@ -15,11 +15,14 @@ import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.lidesheng.hyperlyric.common.RootConstants
 import com.lidesheng.hyperlyric.common.color.ColorExtractor
 import com.lidesheng.hyperlyric.root.HookEntry
+import com.lidesheng.hyperlyric.root.island.IslandAlbumCoverStyleHooker
+import com.lidesheng.hyperlyric.root.island.IslandProbeUtils
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import io.github.libxposed.api.XposedInterface.Chain
 import io.github.libxposed.api.XposedInterface.HookHandle
@@ -42,6 +45,8 @@ object IslandExpandedMediaAmbientFlowHooker {
         "miuix.miuixbasewidget.widget.HyperProgressSeekBar\$1"
     private const val BASE_CONTENT_VIEW_CLASS =
         "miui.systemui.dynamicisland.window.content.DynamicIslandBaseContentView"
+    private const val FAKE_CONTENT_VIEW_CLASS =
+        "miui.systemui.dynamicisland.window.content.DynamicIslandContentFakeView"
     private const val EXPANDED_VIEW_CLASS =
         "miui.systemui.dynamicisland.view.DynamicIslandExpandedView"
     private const val MI_BLUR_COMPAT_CLASS = "miui.systemui.util.MiBlurCompat"
@@ -126,6 +131,9 @@ object IslandExpandedMediaAmbientFlowHooker {
             SEEK_BAR_HEAD_ALPHA_LISTENER_CLASS ->
                 method.name == "onUpdate" && method.parameterCount == 2
 
+            BASE_CONTENT_VIEW_CLASS ->
+                method.name == "updateMiniBar" && method.parameterCount == 1
+
             else -> false
         }
     }
@@ -147,6 +155,7 @@ object IslandExpandedMediaAmbientFlowHooker {
 
             MUSIC_BG_VIEW_CLASS -> PlaybackStartHook()
             SEEK_BAR_HEAD_ALPHA_LISTENER_CLASS -> HeadGlowUpdateHook()
+            BASE_CONTENT_VIEW_CLASS -> MiniBarUpdateHook()
             else -> null
         }
     }
@@ -157,6 +166,11 @@ object IslandExpandedMediaAmbientFlowHooker {
             binders.forEach { binder ->
                 restoreCardTheme(binder)
                 restoreMediaElements(binder)
+            }
+            val api = nativeApi
+            if (api != null) {
+                val trackedViews = synchronized(themeStates) { themeStates.keys.toList() }
+                trackedViews.forEach { view -> restoreTrackedTheme(view, api) }
             }
             IslandExpandedMediaElementController.cleanup()
             activeBinders.clear()
@@ -193,6 +207,11 @@ object IslandExpandedMediaAmbientFlowHooker {
                     Action.ALBUM,
                     Action.SEAMLESS -> applyMediaElements(binder)
                     Action.DETACH -> Unit
+                }
+                if (action != Action.DETACH) {
+                    IslandAlbumCoverStyleHooker.onPlaybackStateChanged(
+                        requireNotNull(nativeApi).isPlaying(binder)
+                    )
                 }
             }.onFailure { error ->
                 HookLogger.e(TAG, "Failed to apply expanded media flow mode", error)
@@ -246,6 +265,19 @@ object IslandExpandedMediaAmbientFlowHooker {
         }
     }
 
+    private class MiniBarUpdateHook : Hooker {
+        override fun intercept(chain: Chain): Any? {
+            val result = chain.proceed()
+            runCatching {
+                val contentView = chain.thisObject as? View ?: return@runCatching
+                applyContentViewTheme(contentView)
+            }.onFailure { error ->
+                HookLogger.e(TAG, "Failed to restore expanded media mini bar theme", error)
+            }
+            return result
+        }
+    }
+
     fun refreshCardTheme() {
         val refresh = Runnable {
             val snapshot = synchronized(activeBinders) { activeBinders.toList() }
@@ -256,6 +288,31 @@ object IslandExpandedMediaAmbientFlowHooker {
         }
         if (Looper.myLooper() == Looper.getMainLooper()) refresh.run()
         else Handler(Looper.getMainLooper()).post(refresh)
+    }
+
+    fun applyFakeTransitionTheme(fakeContentView: ViewGroup) {
+        applyContentViewTheme(fakeContentView)
+    }
+
+    private fun applyContentViewTheme(contentView: View) {
+        val isFakeView = contentView.javaClass.name == FAKE_CONTENT_VIEW_CLASS
+        val dataOwner = if (isFakeView) {
+            contentView.javaClass.methods.firstOrNull {
+                it.name == "getRealView" && it.parameterTypes.isEmpty()
+            }?.invoke(contentView)
+        } else {
+            contentView
+        }
+        if (!IslandProbeUtils.isMediaIsland(IslandProbeUtils.getCurrentIslandData(dataOwner))) return
+
+        val api = nativeApi ?: return
+        if (!shouldUseLightTheme(contentView.context)) {
+            restoreTrackedTheme(contentView, api)
+            return
+        }
+
+        val target = api.findContentBackgroundTarget(contentView) ?: return
+        applyLightExpandedBackground(api, target)
     }
 
     fun refreshMediaElements() {
@@ -312,7 +369,15 @@ object IslandExpandedMediaAmbientFlowHooker {
         player: View
     ): Boolean {
         val target = api.findExpandedBackgroundTarget(player) ?: return false
-        val state = themeStates.getOrPut(player) {
+        applyLightExpandedBackground(api, target)
+        return true
+    }
+
+    private fun applyLightExpandedBackground(
+        api: NativeApi,
+        target: ExpandedBackgroundTarget
+    ) {
+        val state = themeStates.getOrPut(target.owner) {
             val miniBar = api.getMiniBar(target)
             ViewThemeState(
                 target = target,
@@ -325,15 +390,25 @@ object IslandExpandedMediaAmbientFlowHooker {
         state.miniBar?.backgroundTintList = ColorStateList.valueOf(
             Color.argb(0x99, 0, 0, 0)
         )
-        return true
     }
 
     private fun shouldUseLightTheme(binder: Any): Boolean {
         val api = nativeApi ?: return false
+        return shouldUseLightTheme(api.getContext(binder))
+    }
+
+    private fun shouldUseLightTheme(context: Context): Boolean {
         return when (currentCardTheme()) {
             RootConstants.MEDIA_CARD_THEME_ALWAYS_LIGHT -> true
             RootConstants.MEDIA_CARD_THEME_ALWAYS_DARK -> false
-            else -> !api.getContext(binder).resources.configuration.isNightMode
+            else -> !context.resources.configuration.isNightMode
+        }
+    }
+
+    private fun restoreTrackedTheme(view: View, api: NativeApi) {
+        themeStates.remove(view)?.let { state ->
+            state.miniBar?.backgroundTintList = state.originalMiniBarTint
+            api.restoreNativeExpandedBackground(state.target)
         }
     }
 
@@ -342,9 +417,8 @@ object IslandExpandedMediaAmbientFlowHooker {
         api.getHolders(binder).forEach { holder ->
             val player = api.getPlayer(holder)
             val seekBar = api.getSeekBar(holder)
-            themeStates.remove(player)?.let { state ->
-                state.miniBar?.backgroundTintList = state.originalMiniBarTint
-                api.restoreNativeExpandedBackground(state.target)
+            api.findExpandedBackgroundTarget(player)?.let { target ->
+                restoreTrackedTheme(target.owner, api)
             }
             seekBarThemeStates.remove(seekBar)?.let { state ->
                 api.setSeekBarShaderColorFilter(seekBar, state.originalColorFilter)
@@ -571,7 +645,7 @@ object IslandExpandedMediaAmbientFlowHooker {
     )
 
     private data class ExpandedBackgroundTarget(
-        val owner: Any,
+        val owner: View,
         val expandedView: View
     )
 
@@ -751,6 +825,18 @@ object IslandExpandedMediaAmbientFlowHooker {
             return null
         }
 
+        fun findContentBackgroundTarget(contentView: View): ExpandedBackgroundTarget? {
+            val getterName = if (contentView.javaClass.name == FAKE_CONTENT_VIEW_CLASS) {
+                "getFakeExpandedView"
+            } else {
+                "getExpandedView"
+            }
+            val expandedView = contentView.javaClass.methods.firstOrNull {
+                it.name == getterName && it.parameterTypes.isEmpty()
+            }?.invoke(contentView) as? View ?: return null
+            return ExpandedBackgroundTarget(contentView, expandedView)
+        }
+
         fun getMiniBar(target: ExpandedBackgroundTarget): View? {
             return expandedBackgroundMethods(target).getMiniBar.invoke(target.owner) as? View
         }
@@ -830,6 +916,7 @@ object IslandExpandedMediaAmbientFlowHooker {
         companion object {
             fun create(classLoader: ClassLoader): NativeApi {
                 val binderClass = classLoader.loadClass(BINDER_CLASS)
+                val baseContentViewClass = classLoader.loadClass(BASE_CONTENT_VIEW_CLASS)
                 val holderClass = classLoader.loadClass(
                     "com.android.systemui.statusbar.notification.mediaisland.MiuiIslandMediaViewHolder"
                 )
@@ -880,7 +967,10 @@ object IslandExpandedMediaAmbientFlowHooker {
                         }.apply { isAccessible = true },
                         start,
                         resume,
-                        headAlphaUpdate
+                        headAlphaUpdate,
+                        baseContentViewClass.declaredMethods.single {
+                            it.name == "updateMiniBar" && it.parameterCount == 1
+                        }.apply { isAccessible = true }
                     ),
                     holderField = binderClass.getDeclaredField("holder").apply {
                         isAccessible = true

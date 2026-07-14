@@ -73,15 +73,6 @@ internal object IslandHostFacade {
         HookIslandGlow.updateMusicGlow(rootView, albumArt, prefs)
     }
 
-    fun updateMusicWaveColors(
-        rootView: ViewGroup,
-        packageName: String,
-        mediaInfo: MediaMetadataHelper.MediaInfo,
-        prefs: SharedPreferences
-    ) {
-        IslandMusicWaveColorHooker.update(rootView, packageName, mediaInfo, prefs)
-    }
-
     fun updateProgressGlow(
         rootView: ViewGroup,
         packageName: String,

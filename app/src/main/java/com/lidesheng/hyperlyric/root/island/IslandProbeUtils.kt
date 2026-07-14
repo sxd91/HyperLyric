@@ -28,16 +28,16 @@ internal object IslandProbeUtils {
         val extras = extractExtras(data) ?: return null
         val pkgName = extras.getString("miui.pkg.name").orEmpty()
         if (pkgName.isEmpty()) return null
-
-        val pendingIntent = runCatching {
-            @Suppress("DEPRECATION")
-            extras.getParcelable("miui.pending.intent") as? PendingIntent
-        }.getOrNull()
-        if (pendingIntent == null) return null
+        if (!hasMediaPendingIntent(extras)) return null
 
         return MediaIslandInfo(
             packageName = pkgName
         )
+    }
+
+    fun isMediaIsland(data: Any?): Boolean {
+        val extras = extractExtras(data) ?: return false
+        return hasMediaPendingIntent(extras)
     }
 
     fun getCurrentIslandData(contentView: Any?): Any? {
@@ -67,6 +67,13 @@ internal object IslandProbeUtils {
         return runCatching {
             data.callGetter("getExtras") as? Bundle
         }.getOrNull()
+    }
+
+    private fun hasMediaPendingIntent(extras: Bundle): Boolean {
+        return runCatching {
+            @Suppress("DEPRECATION")
+            extras.getParcelable("miui.pending.intent") as? PendingIntent
+        }.getOrNull() != null
     }
 
     private fun Any?.callGetter(name: String): Any? {

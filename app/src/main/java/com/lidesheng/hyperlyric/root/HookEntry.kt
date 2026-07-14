@@ -7,6 +7,7 @@ import android.os.Looper
 import com.lidesheng.hyperlyric.lyric.source.SourceManager
 import com.lidesheng.hyperlyric.root.island.FakeIslandTransitionHooker
 import com.lidesheng.hyperlyric.root.island.IslandAlbumCoverStyleHooker
+import com.lidesheng.hyperlyric.root.island.IslandMusicWaveColorHooker
 import com.lidesheng.hyperlyric.root.island.IslandProgressGlowHooker
 import com.lidesheng.hyperlyric.root.island.IslandModuleRestoreHooker
 import com.lidesheng.hyperlyric.root.island.SystemUIHookRegistry
@@ -54,9 +55,6 @@ class HookEntry : XposedModule() {
             private set
 
         private val SUPER_ISLAND_RUNTIME_REFRESH_KEYS = setOf(
-            RootConstants.KEY_HOOK_ISLAND_RIGHT_ICON,
-            RootConstants.KEY_HOOK_ISLAND_MUSIC_WAVE_COLOR,
-            RootConstants.KEY_HOOK_ISLAND_MUSIC_WAVE_GRADIENT,
             RootConstants.KEY_HOOK_ISLAND_CONTENT_LEFT,
             RootConstants.KEY_HOOK_ISLAND_CONTENT_RIGHT,
             RootConstants.KEY_HOOK_ISLAND_LEFT_PADDING_LEFT,
@@ -378,6 +376,20 @@ class HookEntry : XposedModule() {
                             BaseIslandRenderer.refreshActiveIsland()
                         }
                     }
+                    RootConstants.KEY_HOOK_ISLAND_MUSIC_WAVE_COLOR,
+                    RootConstants.KEY_HOOK_ISLAND_MUSIC_WAVE_GRADIENT -> {
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            IslandAlbumCoverStyleHooker.refresh()
+                            IslandMusicWaveColorHooker.refresh()
+                        }
+                    }
+                    RootConstants.KEY_HOOK_ISLAND_RIGHT_ICON -> {
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            IslandAlbumCoverStyleHooker.refresh()
+                            IslandMusicWaveColorHooker.refresh()
+                            BaseIslandRenderer.refreshActiveIsland()
+                        }
+                    }
                     RootConstants.KEY_HOOK_NOTIFICATION_MEDIA_CARD_THEME -> {
                         android.os.Handler(android.os.Looper.getMainLooper()).post {
                             NotificationMediaAmbientFlowHooker.refreshCardTheme()
@@ -423,6 +435,7 @@ class HookEntry : XposedModule() {
 
     private fun cleanupRuntime() {
         IslandAlbumCoverStyleHooker.cleanup()
+        IslandMusicWaveColorHooker.cleanup()
         prefListener?.let {
             runCatching { prefs.unregisterOnSharedPreferenceChangeListener(it) }
         }

@@ -7,7 +7,6 @@ import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import com.lidesheng.hyperlyric.common.RootConstants
-import com.lidesheng.hyperlyric.common.media.MediaMetadataHelper
 import com.lidesheng.hyperlyric.root.HookEntry
 import com.lidesheng.hyperlyric.root.utils.CoverColorHelper
 import com.lidesheng.hyperlyric.root.utils.HookLogger
@@ -107,44 +106,27 @@ internal object IslandMusicWaveColorHooker {
         }
     }
 
-    fun update(
-        rootView: ViewGroup,
-        packageName: String,
-        mediaInfo: MediaMetadataHelper.MediaInfo,
-        sharedPrefs: SharedPreferences
-    ) {
-        runCatching {
-            updateInternal(rootView, packageName, mediaInfo, sharedPrefs)
-        }.onFailure { e ->
-            HookLogger.e(TAG, "Failed to update music wave cover colors", e)
+    fun refresh() {
+        runOnMain {
+            val sharedPrefs = prefs
+            if (sharedPrefs == null || !isEnabled(sharedPrefs)) {
+                restoreNativeColors()
+            } else {
+                desiredColors?.let { colorAccessor?.write(it) }
+                invalidateTrackedLottieViews()
+            }
         }
     }
 
-    private fun updateInternal(
-        rootView: ViewGroup,
-        packageName: String,
-        mediaInfo: MediaMetadataHelper.MediaInfo,
-        sharedPrefs: SharedPreferences
-    ) {
-        if (!isEnabled(sharedPrefs)) {
-            restoreNativeColors(rootView)
-            return
+    fun cleanup() {
+        runOnMain {
+            restoreNativeColors()
+            synchronized(trackedLottieViews) {
+                trackedLottieViews.clear()
+            }
+            nativeColors = null
+            colorAccessor = null
         }
-
-        val albumArt = mediaInfo.albumArt
-        if (albumArt == null) {
-            restoreNativeColors(rootView)
-            return
-        }
-
-        val mediaColorKey = CoverColorHelper.updateMediaSession(
-            packageName = packageName,
-            title = mediaInfo.title,
-            artist = mediaInfo.artist,
-            album = mediaInfo.album
-        )
-        applyOptimizedColors(albumArt, sharedPrefs, mediaColorKey)
-        invalidateLottieViews(rootView)
     }
 
     private fun applyOptimizedColors(
@@ -238,8 +220,9 @@ internal object IslandMusicWaveColorHooker {
                     return@runCatching
                 }
 
-                val mediaColorKey = CoverColorHelper.currentMediaKey()
-                    ?: "music-wave-${bitmap.generationId}-${bitmap.width}x${bitmap.height}"
+                val mediaColorKey =
+                    "music-wave-${System.identityHashCode(bitmap)}-${bitmap.generationId}-" +
+                        "${bitmap.width}x${bitmap.height}"
                 runOnMain {
                     runCatching {
                         applyOptimizedColors(bitmap, sharedPrefs, mediaColorKey)

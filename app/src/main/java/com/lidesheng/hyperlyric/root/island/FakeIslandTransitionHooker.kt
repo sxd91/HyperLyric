@@ -3,6 +3,7 @@ package com.lidesheng.hyperlyric.root.island
 import android.view.View
 import android.view.ViewGroup
 import com.lidesheng.hyperlyric.root.island.IslandTextHookerSupport.TAG
+import com.lidesheng.hyperlyric.root.mediacard.island.IslandExpandedMediaAmbientFlowHooker
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import io.github.libxposed.api.XposedInterface.Chain
 import io.github.libxposed.api.XposedInterface.Hooker
@@ -15,6 +16,7 @@ internal object FakeIslandTransitionHooker {
 
             runCatching {
                 val fakeView = chain.thisObject as? ViewGroup ?: return@runCatching
+                IslandExpandedMediaAmbientFlowHooker.applyFakeTransitionTheme(fakeView)
                 val generation = FakeIslandTransitionState.ensureActive(fakeView)
                 IslandTextHookerSupport.prepareFrozenFakeIslandForTransition(fakeView, "after fake.onTrackingFakeViewStart")
                 fakeView.post {
@@ -41,6 +43,7 @@ internal object FakeIslandTransitionHooker {
 
             runCatching {
                 val fakeView = chain.thisObject as? ViewGroup ?: return@runCatching
+                IslandExpandedMediaAmbientFlowHooker.applyFakeTransitionTheme(fakeView)
                 val generation = FakeIslandTransitionState.ensureActive(fakeView)
                 IslandTextHookerSupport.prepareFrozenFakeIslandForTransition(fakeView, "after fake.updateViewStateWhenOpenAnimStart")
                 fakeView.post {
@@ -62,6 +65,7 @@ internal object FakeIslandTransitionHooker {
             if (visibility == View.VISIBLE) {
                 runCatching {
                     val fakeView = chain.thisObject as? ViewGroup ?: return@runCatching
+                    IslandExpandedMediaAmbientFlowHooker.applyFakeTransitionTheme(fakeView)
                     FakeIslandTransitionState.ensureActive(fakeView)
                     IslandTextHookerSupport.prepareFrozenFakeIslandForTransition(fakeView, "before fake.setVisibility(VISIBLE)")
                 }.onFailure { e ->
