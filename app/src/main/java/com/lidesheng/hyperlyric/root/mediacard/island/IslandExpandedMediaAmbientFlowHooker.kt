@@ -457,6 +457,7 @@ object IslandExpandedMediaAmbientFlowHooker {
                 IslandExpandedMediaBackgroundController.restoreFakeTransition(target, api)
                 applyCustomFakeFlow(fakeContentView, it, target, api)
             }
+            applyFakeMediaElements(fakeContentView, binder, api)
             return
         }
         restoreCustomFakeFlow(fakeContentView)
@@ -480,6 +481,7 @@ object IslandExpandedMediaAmbientFlowHooker {
                 }
             }
         }
+        applyFakeMediaElements(fakeContentView, binder, api)
     }
 
     private fun applyCustomFakeFlow(
@@ -772,6 +774,39 @@ object IslandExpandedMediaAmbientFlowHooker {
         api.getHolders(binder).forEach { holder ->
             IslandExpandedMediaElementController.restore(api.getMediaElements(holder))
         }
+    }
+
+    private fun applyFakeMediaElements(
+        fakeContentView: ViewGroup,
+        binder: Any?,
+        api: NativeApi
+    ) {
+        val coverStyle = currentCoverStyle()
+        val hideCoverSource = hideCoverSource()
+        val hideDeviceSwitch = hideDeviceSwitch()
+        if (
+            coverStyle == RootConstants.ISLAND_EXPANDED_MEDIA_COVER_STYLE_DEFAULT &&
+            !hideCoverSource &&
+            !hideDeviceSwitch
+        ) {
+            return
+        }
+        val fakeExpandedView = fakeContentView.javaClass.methods.firstOrNull {
+            it.name == "getFakeExpandedView" && it.parameterTypes.isEmpty()
+        }?.invoke(fakeContentView) as? View ?: return
+        val activeBinder = binder
+            ?: synchronized(activeBinders) { activeBinders.firstOrNull() }
+            ?: return
+        val referenceElements = api.getHolders(activeBinder).firstNotNullOfOrNull { holder ->
+            runCatching { api.getMediaElements(holder) }.getOrNull()
+        } ?: return
+        IslandExpandedMediaElementController.applyToFakeView(
+            fakeExpandedView = fakeExpandedView,
+            referenceElements = referenceElements,
+            coverStyle = coverStyle,
+            hideCoverSource = hideCoverSource,
+            hideDeviceSwitch = hideDeviceSwitch
+        )
     }
 
     private fun applyMode(binder: Any, allowCoverColor: Boolean) {

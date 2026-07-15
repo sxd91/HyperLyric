@@ -10,6 +10,12 @@ object ChangelogData {
     fun getChangelog(): List<ChangelogItem> {
         return listOf(
             ChangelogItem(
+                version = "6.5-1935",
+                title = "",
+                summary = "- 修复超级岛展开态媒体卡片下拉的过渡动画\n" +
+                        "- "
+            ),
+            ChangelogItem(
                 version = "6.4-1934",
                 title = "燃尽了",
                 summary = "- 新增媒体卡片“音频封面样式”、“隐藏来源标识”、“隐藏设备切换按钮”功能\n" +

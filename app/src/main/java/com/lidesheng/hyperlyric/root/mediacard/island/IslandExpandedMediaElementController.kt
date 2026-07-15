@@ -79,6 +79,60 @@ internal object IslandExpandedMediaElementController {
         state.restoreAll()
     }
 
+    fun applyToFakeView(
+        fakeExpandedView: View,
+        referenceElements: IslandExpandedMediaElements,
+        coverStyle: Int,
+        hideCoverSource: Boolean,
+        hideDeviceSwitch: Boolean
+    ) {
+        if (
+            coverStyle == RootConstants.ISLAND_EXPANDED_MEDIA_COVER_STYLE_DEFAULT &&
+            !hideCoverSource &&
+            !hideDeviceSwitch
+        ) {
+            return
+        }
+
+        val albumViewId = referenceElements.albumView.id
+        val albumImageId = referenceElements.albumImage.id
+        val coverSourceId = referenceElements.coverSource.id
+        val deviceSwitchId = referenceElements.deviceSwitch.id
+
+        when (coverStyle) {
+            RootConstants.ISLAND_EXPANDED_MEDIA_COVER_STYLE_CIRCLE,
+            RootConstants.ISLAND_EXPANDED_MEDIA_COVER_STYLE_ROTATING_CIRCLE -> {
+                if (albumViewId != 0) {
+                    fakeExpandedView.findViewById<View>(albumViewId)?.let { albumView ->
+                        albumView.outlineProvider = circleOutlineProvider
+                        albumView.clipToOutline = false
+                        albumView.invalidateOutline()
+                    }
+                }
+                if (albumImageId != 0) {
+                    fakeExpandedView.findViewById<View>(albumImageId)?.let { albumImage ->
+                        albumImage.outlineProvider = circleOutlineProvider
+                        albumImage.clipToOutline = true
+                        albumImage.invalidateOutline()
+                    }
+                }
+            }
+
+            RootConstants.ISLAND_EXPANDED_MEDIA_COVER_STYLE_HIDDEN -> {
+                if (albumViewId != 0) {
+                    fakeExpandedView.findViewById<View>(albumViewId)?.let { it.visibility = View.GONE }
+                }
+            }
+        }
+
+        if (hideCoverSource && coverSourceId != 0) {
+            fakeExpandedView.findViewById<View>(coverSourceId)?.let { it.visibility = View.GONE }
+        }
+        if (hideDeviceSwitch && deviceSwitchId != 0) {
+            fakeExpandedView.findViewById<View>(deviceSwitchId)?.let { it.visibility = View.GONE }
+        }
+    }
+
     fun cleanup() {
         states.values.toList().forEach { state ->
             MediaCoverRotationController.detach(state.elements.albumImage)
