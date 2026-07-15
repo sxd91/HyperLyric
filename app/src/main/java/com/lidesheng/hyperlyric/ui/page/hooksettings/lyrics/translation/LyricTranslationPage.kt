@@ -30,6 +30,7 @@ fun LyricTranslationPage() {
     var aiTransEnabled by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_AI_TRANS_ENABLE, RootConstants.DEFAULT_HOOK_AI_TRANS_ENABLE)) }
     var autoIgnoreChinese by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_AI_TRANS_AUTO_IGNORE_CHINESE, RootConstants.DEFAULT_HOOK_AI_TRANS_AUTO_IGNORE_CHINESE)) }
     var skipExistingTranslation by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_AI_TRANS_SKIP_EXISTING_TRANSLATION, RootConstants.DEFAULT_HOOK_AI_TRANS_SKIP_EXISTING_TRANSLATION)) }
+    var forceAiTranslation by remember { mutableStateOf(prefs.getBoolean(RootConstants.KEY_HOOK_AI_TRANS_FORCE_OVERRIDE, RootConstants.DEFAULT_HOOK_AI_TRANS_FORCE_OVERRIDE)) }
     var apiKey by remember { mutableStateOf(prefs.getString(RootConstants.KEY_HOOK_AI_TRANS_API_KEY, "") ?: "") }
     var model by remember { mutableStateOf(prefs.getString(RootConstants.KEY_HOOK_AI_TRANS_MODEL, RootConstants.DEFAULT_HOOK_AI_TRANS_MODEL) ?: RootConstants.DEFAULT_HOOK_AI_TRANS_MODEL) }
     var baseUrl by remember { mutableStateOf(prefs.getString(RootConstants.KEY_HOOK_AI_TRANS_BASE_URL, RootConstants.DEFAULT_HOOK_AI_TRANS_BASE_URL) ?: RootConstants.DEFAULT_HOOK_AI_TRANS_BASE_URL) }
@@ -140,6 +141,19 @@ fun LyricTranslationPage() {
             onSkipExistingTranslationChange = {
                 skipExistingTranslation = it
                 saveConfig(RootConstants.KEY_HOOK_AI_TRANS_SKIP_EXISTING_TRANSLATION, it)
+                if (it && forceAiTranslation) {
+                    forceAiTranslation = false
+                    saveConfig(RootConstants.KEY_HOOK_AI_TRANS_FORCE_OVERRIDE, false)
+                }
+            },
+            forceAiTranslation = forceAiTranslation,
+            onForceAiTranslationChange = {
+                forceAiTranslation = it
+                saveConfig(RootConstants.KEY_HOOK_AI_TRANS_FORCE_OVERRIDE, it)
+                if (it && skipExistingTranslation) {
+                    skipExistingTranslation = false
+                    saveConfig(RootConstants.KEY_HOOK_AI_TRANS_SKIP_EXISTING_TRANSLATION, false)
+                }
             },
             targetLang = targetLang,
             onTargetLangClick = { showTargetLangDialog = true },

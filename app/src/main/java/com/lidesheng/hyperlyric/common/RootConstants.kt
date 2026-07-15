@@ -120,6 +120,7 @@ object RootConstants {
     const val KEY_HOOK_AI_TRANS_ENABLE = "key_hook_ai_trans_enable"
     const val KEY_HOOK_AI_TRANS_AUTO_IGNORE_CHINESE = "key_hook_ai_trans_auto_ignore_chinese"
     const val KEY_HOOK_AI_TRANS_SKIP_EXISTING_TRANSLATION = "key_hook_ai_trans_skip_existing_translation"
+    const val KEY_HOOK_AI_TRANS_FORCE_OVERRIDE = "key_hook_ai_trans_force_override"
     const val KEY_HOOK_AI_TRANS_PROVIDER = "key_hook_ai_trans_provider"
     const val KEY_HOOK_AI_TRANS_API_KEY = "key_hook_ai_trans_api_key"
     const val KEY_HOOK_AI_TRANS_MODEL = "key_hook_ai_trans_model"
@@ -257,6 +258,7 @@ object RootConstants {
     const val DEFAULT_HOOK_AI_TRANS_ENABLE = false
     const val DEFAULT_HOOK_AI_TRANS_AUTO_IGNORE_CHINESE = false
     const val DEFAULT_HOOK_AI_TRANS_SKIP_EXISTING_TRANSLATION = false
+    const val DEFAULT_HOOK_AI_TRANS_FORCE_OVERRIDE = false
     const val DEFAULT_HOOK_AI_TRANS_TARGET_LANG = "中文"
     const val DEFAULT_HOOK_AI_TRANS_MODEL = "mimo-v2-flash"
     const val DEFAULT_HOOK_AI_TRANS_BASE_URL = "https://api.xiaomimimo.com/v1/"

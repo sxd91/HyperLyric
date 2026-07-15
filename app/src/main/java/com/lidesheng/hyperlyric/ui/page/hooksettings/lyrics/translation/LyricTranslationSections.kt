@@ -33,6 +33,8 @@ fun LazyListScope.translationSections(
     onAutoIgnoreChineseChange: (Boolean) -> Unit,
     skipExistingTranslation: Boolean,
     onSkipExistingTranslationChange: (Boolean) -> Unit,
+    forceAiTranslation: Boolean,
+    onForceAiTranslationChange: (Boolean) -> Unit,
     targetLang: String,
     onTargetLangClick: () -> Unit,
     apiKey: String,
@@ -108,6 +110,13 @@ fun LazyListScope.translationSections(
                                     title = stringResource(id = R.string.title_ai_trans_skip_existing),
                                     checked = skipExistingTranslation,
                                     onCheckedChange = onSkipExistingTranslationChange,
+                                    enabled = translationControlsEnabled
+                                )
+                                SwitchPreference(
+                                    title = stringResource(id = R.string.title_ai_trans_force_override),
+                                    summary = stringResource(id = R.string.summary_ai_trans_force_override),
+                                    checked = forceAiTranslation,
+                                    onCheckedChange = onForceAiTranslationChange,
                                     enabled = translationControlsEnabled
                                 )
                                 Column {

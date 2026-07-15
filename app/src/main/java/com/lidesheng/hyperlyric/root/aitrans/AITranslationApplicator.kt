@@ -8,14 +8,18 @@ import com.lidesheng.hyperlyric.lyric.model.Song
 internal object AITranslationApplicator {
     private const val TAG = "HyperLyricAITranslator"
 
-    fun apply(song: Song, transItems: List<TranslationItem>): Song {
+    fun apply(
+        song: Song,
+        transItems: List<TranslationItem>,
+        forceOverride: Boolean = false
+    ): Song {
         var appliedCount = 0
         val translationsByIndex = transItems.associateBy { it.index }
         val newLyrics = song.lyrics?.mapIndexed { index, line ->
             val transText = translationsByIndex[index]?.trans?.trim()
 
             if (!transText.isNullOrBlank()
-                && line.translation.isNullOrBlank()
+                && (forceOverride || line.translation.isNullOrBlank())
                 && transText.lowercase() != line.text?.trim()?.lowercase()
             ) {
                 appliedCount++

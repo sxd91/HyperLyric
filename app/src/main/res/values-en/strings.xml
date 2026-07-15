@@ -283,6 +283,8 @@
     <string name="title_ai_trans_basic">Basic Settings</string>
     <string name="title_ai_trans_auto_ignore_chinese">Automatically Skip Chinese Lyrics</string>
     <string name="title_ai_trans_skip_existing">Auto Skip Songs with Translation</string>
+    <string name="title_ai_trans_force_override">Force AI Translation</string>
+    <string name="summary_ai_trans_force_override">Replace existing translations from the lyric source with AI translations</string>
     <string name="label_ai_trans_api_key">API Key</string>
     <string name="label_ai_trans_model">Model Name</string>
     <string name="label_ai_trans_base_url">API Base URL</string>

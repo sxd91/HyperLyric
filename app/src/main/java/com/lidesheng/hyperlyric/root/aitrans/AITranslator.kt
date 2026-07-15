@@ -49,6 +49,7 @@ object AITranslator {
     suspend fun translateSongSync(
         song: Song,
         configs: AiTranslationConfigs,
+        forceOverride: Boolean = false,
     ): Song {
         if (!configs.isUsable) {
             HookLogger.w("AITranslator", "跳过翻译：配置不完整，API Key 或其他配置为空")
@@ -58,7 +59,7 @@ object AITranslator {
 
         HookLogger.d("AITranslator", "正在翻译：${song.name}（共 ${song.lyrics?.size ?: 0} 行）")
         return try {
-            translateSong(song, configs)
+            translateSong(song, configs, forceOverride)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -79,20 +80,24 @@ object AITranslator {
         cache.clear(callback)
     }
 
-    private suspend fun translateSong(song: Song, configs: AiTranslationConfigs): Song {
+    private suspend fun translateSong(
+        song: Song,
+        configs: AiTranslationConfigs,
+        forceOverride: Boolean
+    ): Song {
         val currentLyrics = song.lyrics ?: return song
         val originalLines = currentLyrics.map { it.text?.trim() ?: "" }
         val songContentId = AITranslationKey.calculate(configs, song, originalLines)
 
         cache.getFromMemory(songContentId)?.let {
             HookLogger.d("AITranslator", "缓存命中：从内存加载了 ${song.name} 的翻译")
-            return AITranslationApplicator.apply(song, it)
+            return AITranslationApplicator.apply(song, it, forceOverride)
         }
 
         cache.getFromDb(songContentId)?.let {
             HookLogger.d("AITranslator", "记录命中：从本地存储加载了 ${song.name} 的翻译")
             cache.putMemory(songContentId, it)
-            return AITranslationApplicator.apply(song, it)
+            return AITranslationApplicator.apply(song, it, forceOverride)
         }
 
         HookLogger.d("AITranslator", "正在请求 AI：本地无记录，准备发起在线翻译")
@@ -101,7 +106,7 @@ object AITranslator {
             HookLogger.w("AITranslator", "翻译失败：未能获取到 ${song.name} 的 AI 翻译")
             return song
         }
-        return AITranslationApplicator.apply(song, apiResults)
+        return AITranslationApplicator.apply(song, apiResults, forceOverride)
     }
 }
 
