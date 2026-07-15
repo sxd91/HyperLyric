@@ -53,7 +53,7 @@ internal object IslandProgressGlowHooker {
             onDrawMethod.isAccessible = true
             module.deoptimize(onDrawMethod)
             module.hook(onDrawMethod).intercept(BackgroundDrawHook())
-            HookLogger.i(TAG, "Native island background progress hook initialized")
+            HookLogger.i(TAG, "边缘光效进度条 Hook 已初始化")
         } catch (e: Throwable) {
             hookedClassLoaders.remove(classLoader)
             throw e
@@ -130,9 +130,9 @@ internal object IslandProgressGlowHooker {
                 synchronized(IslandProgressGlowHooker) {
                     if (!loggedFirstDraw) {
                         loggedFirstDraw = true
-                        HookLogger.i(
+                        HookLogger.d(
                             TAG,
-                            "Native background progress drawn: progress=${state.fraction} " +
+                            "首次绘制边缘光效进度: progress=${state.fraction}, " +
                                 "view=${backgroundView.javaClass.name}"
                         )
                     }

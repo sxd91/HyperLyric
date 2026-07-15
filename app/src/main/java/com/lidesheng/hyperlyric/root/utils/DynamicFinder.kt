@@ -1,13 +1,12 @@
 package com.lidesheng.hyperlyric.root.utils
 
-import android.util.Log
 import java.lang.reflect.Method
 
 /**
  * 动态发现工具类，用于在混淆后的代码中定位关键 Hook 点。
  */
 object DynamicFinder {
-    private const val TAG = "HyperLyricFinder"
+    private const val TAG = "DynamicFinder"
 
     /**
      * 在指定的 ClassLoader 中全量扫描类，寻找包含特定常量字符串（如 TAG）的类。
@@ -48,7 +47,10 @@ object DynamicFinder {
                                     field.isAccessible = true
                                     val value = field.get(null) as? String
                                     if (value == targetString) {
-                                        Log.d(TAG, "Found class by TAG '$targetString': $className")
+                                        HookLogger.d(
+                                            TAG,
+                                            "按特征字符串找到类: target=$targetString, class=$className"
+                                        )
                                         return clazz
                                     }
                                 }
@@ -90,7 +92,7 @@ object DynamicFinder {
         for (method in clazz.declaredMethods) {
             if (method.name == methodName && method.parameterTypes.contentEquals(parameterTypes)) {
                 if (returnType == null || method.returnType == returnType) {
-                    Log.d(TAG, "Found normal method: ${clazz.name}.$methodName")
+                    HookLogger.d(TAG, "找到普通方法: method=${clazz.name}.$methodName")
                     return method
                 }
             }
@@ -104,7 +106,7 @@ object DynamicFinder {
                     // 检查前面的参数是否匹配
                     val leadingParams = method.parameterTypes.copyOfRange(0, parameterTypes.size)
                     if (leadingParams.contentEquals(parameterTypes)) {
-                        Log.d(TAG, "Found suspend method: ${clazz.name}.$methodName")
+                        HookLogger.d(TAG, "找到挂起方法: method=${clazz.name}.$methodName")
                         return method
                     }
                 }
@@ -131,7 +133,10 @@ object DynamicFinder {
                         method.returnType == returnType
                     ) {
                         if (predicate == null || predicate(method)) {
-                            Log.d(TAG, "Found method by signature: ${clazz.name}.${method.name}")
+                            HookLogger.d(
+                                TAG,
+                                "按签名找到方法: method=${clazz.name}.${method.name}"
+                            )
                             return method
                         }
                     }

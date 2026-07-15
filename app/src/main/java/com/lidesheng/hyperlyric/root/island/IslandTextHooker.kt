@@ -125,9 +125,9 @@ internal object IslandTextHooker {
             installExpandedVisibilityHook(module, cl)
             installClosingToExpandedHook(module, cl)
         } catch (e: ClassNotFoundException) {
-            HookLogger.w(TAG, "跳过不支持的 media mini bar Hook: ${e.message}")
+            HookLogger.w(TAG, "跳过不支持的媒体 MiniBar Hook: reason=${e.message}")
         } catch (e: Exception) {
-            HookLogger.e(TAG, "安装 media mini bar Hook 失败", e)
+            HookLogger.e(TAG, "安装媒体 MiniBar Hook 失败", e)
         }
     }
 
@@ -142,7 +142,7 @@ internal object IslandTextHooker {
         module.hook(method).intercept(
             IslandExpandedMediaAmbientFlowHooker.BackgroundUpdateHook()
         )
-        HookLogger.d(TAG, "Hook updateBackgroundBg: $method")
+        HookLogger.d(TAG, "安装展开态背景 Hook: method=$method")
     }
 
     internal fun installExpandedVisibilityHook(module: XposedModule, cl: ClassLoader) {
@@ -155,7 +155,7 @@ internal object IslandTextHooker {
         module.hook(method).intercept(
             IslandExpandedMediaAmbientFlowHooker.ExpandedVisibilityHook()
         )
-        HookLogger.d(TAG, "Hook expanded onVisibilityChanged: $method")
+        HookLogger.d(TAG, "安装展开态可见性 Hook: method=$method")
     }
 
     internal fun installClosingToExpandedHook(module: XposedModule, cl: ClassLoader) {
@@ -168,14 +168,14 @@ internal object IslandTextHooker {
         module.hook(method).intercept(
             IslandExpandedMediaAmbientFlowHooker.ClosingToExpandedHook()
         )
-        HookLogger.d(TAG, "Hook fake setClosingToExpanded: $method")
+        HookLogger.d(TAG, "安装过渡视图 Hook: method=$method")
     }
 
     private inline fun installFeature(name: String, block: () -> Unit) {
         try {
             block()
         } catch (e: ClassNotFoundException) {
-            HookLogger.w(TAG, "跳过不支持的 $name Hook: ${e.message}")
+            HookLogger.w(TAG, "跳过不支持的 $name Hook: reason=${e.message}")
         } catch (e: Exception) {
             HookLogger.e(TAG, "安装 $name Hook 失败", e)
         }

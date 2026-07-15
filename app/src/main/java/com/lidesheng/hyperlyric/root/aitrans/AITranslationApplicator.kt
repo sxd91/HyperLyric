@@ -1,13 +1,10 @@
 ﻿package com.lidesheng.hyperlyric.root.aitrans
 
-import android.util.Log
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import com.lidesheng.hyperlyric.lyric.model.Song
 
 /** Applies validated translation items back to lyric lines. */
 internal object AITranslationApplicator {
-    private const val TAG = "HyperLyricAITranslator"
-
     fun apply(
         song: Song,
         transItems: List<TranslationItem>,
@@ -28,7 +25,10 @@ internal object AITranslationApplicator {
                 line
             }
         }
-        HookLogger.d("AITranslationApplicator", "Result: Applied $appliedCount lines to ${song.name}")
+        HookLogger.d(
+            "AITranslationApplicator",
+            "应用翻译结果: song=${song.name}, lines=$appliedCount"
+        )
         return song.copy(lyrics = newLyrics)
     }
 }

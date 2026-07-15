@@ -51,7 +51,7 @@ object HookIslandGlow {
                 updateTemplateMethod.isAccessible = true
                 module.deoptimize(updateTemplateMethod)
                 module.hook(updateTemplateMethod).intercept(UpdateTemplateHook())
-                HookLogger.i(TAG, "已 Hook DynamicIslandBaseContentView.updateTemplate，用于媒体岛光效")
+                HookLogger.i(TAG, "媒体岛光效 Hook 已初始化: method=updateTemplate")
             } else {
                 HookLogger.w(TAG, "未找到 updateTemplate，跳过媒体岛光效 Hook")
             }

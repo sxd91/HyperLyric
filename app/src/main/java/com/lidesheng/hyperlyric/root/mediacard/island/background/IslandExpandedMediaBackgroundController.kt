@@ -56,7 +56,7 @@ internal interface IslandExpandedMediaBackgroundApi {
 }
 
 internal object IslandExpandedMediaBackgroundController {
-    private const val TAG = "IslandExpandedMediaBg"
+    private const val TAG = "IslandExpandedMediaBackgroundController"
     private val states = Collections.synchronizedMap(WeakHashMap<Any, BinderState>())
     private val fakeStates = Collections.synchronizedMap(
         WeakHashMap<View, FakeState>()
@@ -372,7 +372,7 @@ internal object IslandExpandedMediaBackgroundController {
         executor.execute {
             val renderer = runCatching { MediaBackgroundRendererPool.get(classLoader) }
                 .onFailure { error ->
-                    HookLogger.e(TAG, "Failed to initialize media background renderer", error)
+                HookLogger.e(TAG, "初始化展开态媒体背景渲染器失败", error)
                 }
                 .getOrNull()
             if (renderer == null) {
@@ -402,7 +402,7 @@ internal object IslandExpandedMediaBackgroundController {
                     renderHeight
                 )
             }.onFailure { error ->
-                HookLogger.e(TAG, "Failed to render expanded media background", error)
+                HookLogger.e(TAG, "渲染展开态媒体背景失败", error)
             }.getOrNull()
             if (rendered == null) {
                 view.post {

@@ -122,7 +122,7 @@ class HookEntry : XposedModule() {
         super.onModuleLoaded(param)
         instance = this
         HookLogger.module = this
-        HookLogger.i("HookEntry","模块已加载")
+        HookLogger.i("HookEntry", "模块加载完成")
     }
 
     override fun onHotReloading(param: HotReloadingParam): Boolean {
@@ -173,7 +173,7 @@ class HookEntry : XposedModule() {
                     BaseIslandRenderer.refreshActiveIsland()
                 }
             }
-                ?: HookLogger.w("HookEntry", "热重载后未取得当前 Application，等待 Application.onCreate")
+                ?: HookLogger.w("HookEntry", "热重载运行时恢复延后: reason=application_unavailable")
         }
         HookLogger.i(
             "HookEntry",
@@ -221,7 +221,7 @@ class HookEntry : XposedModule() {
             }
 
             activeMode = prefs.getInt(RootConstants.KEY_HOOK_LYRIC_MODE, RootConstants.DEFAULT_HOOK_LYRIC_MODE)
-            HookLogger.i("HookEntry","超级岛激活模式 = $activeMode")
+            HookLogger.i("HookEntry", "超级岛歌词模式: mode=$activeMode")
 
             // 劫持 Application.onCreate 以初始化 Lyricon Receiver 所需的环境
             try {
@@ -229,12 +229,12 @@ class HookEntry : XposedModule() {
                 val onCreateMethod = appClass.getDeclaredMethod("onCreate")
                 deoptimize(onCreateMethod)
                 hook(onCreateMethod).intercept(AppCreateHooker())
-                HookLogger.i("HookEntry","系统环境注入成功 (Application.onCreate)")
+                HookLogger.d("HookEntry", "安装生命周期 Hook: target=Application.onCreate")
             } catch (e: Exception) {
                 if (e is ClassNotFoundException || e is NoSuchMethodException) {
-                    HookLogger.w("HookEntry","未找到 Application.onCreate，无法注入环境")
+                    HookLogger.w("HookEntry", "跳过生命周期 Hook: target=Application.onCreate")
                 } else {
-                    HookLogger.e("HookEntry", "注入 Application.onCreate 时发生错误", e)
+                    HookLogger.e("HookEntry", "安装生命周期 Hook 失败: target=Application.onCreate", e)
                 }
             }
 
@@ -245,12 +245,12 @@ class HookEntry : XposedModule() {
                     deoptimize(constructor)
                     hook(constructor).intercept(ClassLoaderHooker())
                 }
-                HookLogger.i("HookEntry","插件拦截器已就绪 (ClassLoader)")
+                HookLogger.d("HookEntry", "安装插件加载 Hook: target=BaseDexClassLoader")
             } catch (e: Exception) {
                 if (e is ClassNotFoundException || e is NoSuchMethodException) {
-                    HookLogger.w("HookEntry","未找到 ClassLoader 构造方法")
+                    HookLogger.w("HookEntry", "跳过插件加载 Hook: target=BaseDexClassLoader")
                 } else {
-                    HookLogger.e("HookEntry", "拦截 ClassLoader 时发生错误", e)
+                    HookLogger.e("HookEntry", "安装插件加载 Hook 失败: target=BaseDexClassLoader", e)
                 }
             }
 
@@ -302,7 +302,7 @@ class HookEntry : XposedModule() {
                         if (!SystemUiEnhancementGate.isEnabled()) {
                             return@OnSharedPreferenceChangeListener
                         }
-                        HookLogger.i("HookEntry", "歌词源切换: $newSourceId")
+                        HookLogger.i("HookEntry", "切换歌词源: source=$newSourceId")
                         android.os.Handler(android.os.Looper.getMainLooper()).post {
                             sourceManager?.switchSource(newSourceId)
                         }
@@ -310,7 +310,7 @@ class HookEntry : XposedModule() {
                     RootConstants.KEY_HOOK_LYRIC_MODE -> {
                         val newMode = prefs.getInt(key, RootConstants.DEFAULT_HOOK_LYRIC_MODE)
                         if (newMode == activeMode) return@OnSharedPreferenceChangeListener
-                        HookLogger.i("HookEntry", "歌词模式切换: $newMode")
+                        HookLogger.i("HookEntry", "切换歌词模式: mode=$newMode")
                         android.os.Handler(android.os.Looper.getMainLooper()).post {
                             activeMode = newMode
                             BaseIslandRenderer.refreshActiveIsland()
@@ -399,8 +399,12 @@ class HookEntry : XposedModule() {
                 prefs.registerOnSharedPreferenceChangeListener(it)
             }
 
-            HookLogger.i("HookEntry", "歌词源 = ${sourceManager?.getActiveSource()?.displayName}")
-            HookLogger.i("HookEntry", "系统环境初始化完成")
+            HookLogger.i(
+                "HookEntry",
+                "系统环境初始化完成: enabled=${SystemUiEnhancementGate.isEnabled()}, " +
+                    "source=${sourceManager?.getActiveSource()?.displayName ?: "inactive"}, " +
+                    "mode=$activeMode"
+            )
         } catch (e: Exception) {
             HookLogger.e("HookEntry", "系统环境初始化失败", e)
         }
@@ -429,7 +433,7 @@ class HookEntry : XposedModule() {
         if (enabled) {
             BaseIslandRenderer.refreshActiveIsland()
         }
-        HookLogger.i("HookEntry", "小米系统界面增强状态更新: enabled=$enabled")
+        HookLogger.i("HookEntry", "更新系统界面增强状态: enabled=$enabled")
     }
 
     private fun cleanupRuntime() {
@@ -502,7 +506,7 @@ class HookEntry : XposedModule() {
                 if (e is ClassNotFoundException || e is NoSuchMethodException) {
                     // HookLogger.w("HookEntry","插件中未找到超级岛相关类")
                 } else {
-                    HookLogger.e("HookEntry", "动态注入超级岛插件失败", e)
+                    HookLogger.e("HookEntry", "注入超级岛插件失败", e)
                 }
             }
             return result

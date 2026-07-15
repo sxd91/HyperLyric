@@ -25,7 +25,7 @@ import java.util.WeakHashMap
 import kotlin.math.roundToInt
 
 object NotificationMediaCoverStyleHooker {
-    private const val TAG = "NotificationMediaCoverStyle"
+    private const val TAG = "NotificationMediaCoverStyleHooker"
     private const val VIEW_CONTROLLER_CLASS =
         "com.android.systemui.statusbar.notification.mediacontrol.MiuiMediaViewControllerImpl"
     private const val LAYOUT_CONTROLLER_CLASS =
@@ -72,7 +72,7 @@ object NotificationMediaCoverStyleHooker {
 
         val api = resolveApi(classLoader) ?: run {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Native notification media cover API unavailable; hook skipped")
+            HookLogger.w(TAG, "跳过通知中心媒体封面 Hook: reason=native_api_unavailable")
             return
         }
         val handles = mutableListOf<HookHandle>()
@@ -83,16 +83,21 @@ object NotificationMediaCoverStyleHooker {
                     ?: error("No hooker for ${method.declaringClass.name}.${method.name}")
                 handles += xposedModule.hook(method).intercept(hooker)
             }.onFailure { error ->
-                HookLogger.e(TAG, "Failed to hook ${method.declaringClass.simpleName}.${method.name}", error)
+                    HookLogger.e(
+                        TAG,
+                        "安装通知中心媒体封面 Hook 失败: " +
+                            "method=${method.declaringClass.simpleName}.${method.name}",
+                        error
+                    )
             }
         }
 
         if (handles.size != api.hookMethods.size) {
             handles.forEach(HookHandle::unhook)
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Notification media cover hook was not installed completely")
+            HookLogger.w(TAG, "通知中心媒体封面 Hook 安装不完整")
         } else {
-            HookLogger.i(TAG, "Notification media cover hook initialized: methods=${handles.size}")
+            HookLogger.i(TAG, "通知中心媒体封面 Hook 已初始化: methods=${handles.size}")
         }
     }
 
@@ -125,12 +130,12 @@ object NotificationMediaCoverStyleHooker {
             layouts.forEach { controller ->
                 runCatching {
                     resolveApi(controller.javaClass.classLoader)?.reloadAndApplyLayout(controller)
-                }.onFailure { HookLogger.e(TAG, "Failed to refresh media cover layout", it) }
+                    }.onFailure { HookLogger.e(TAG, "刷新通知中心媒体封面布局失败", it) }
             }
             val controllers = synchronized(activeControllers) { activeControllers.toList() }
             controllers.forEach { controller ->
                 runCatching { applyStyle(controller, null) }
-                    .onFailure { HookLogger.e(TAG, "Failed to refresh media cover style", it) }
+                    .onFailure { HookLogger.e(TAG, "刷新通知中心媒体封面样式失败", it) }
             }
         }
         if (Looper.myLooper() == Looper.getMainLooper()) refresh.run()
@@ -146,7 +151,7 @@ object NotificationMediaCoverStyleHooker {
                     restoringNativeLayout.set(true)
                     resolveApi(controller.javaClass.classLoader)?.reloadAndApplyLayout(controller)
                 } catch (error: Throwable) {
-                    HookLogger.e(TAG, "Failed to restore native media cover layout", error)
+                HookLogger.e(TAG, "恢复通知中心原生媒体封面布局失败", error)
                 } finally {
                     restoringNativeLayout.remove()
                 }
@@ -191,7 +196,7 @@ object NotificationMediaCoverStyleHooker {
                         null
                     }
                     applyStyle(controller, mediaData)
-                }.onFailure { HookLogger.e(TAG, "Failed to apply media cover style", it) }
+                }.onFailure { HookLogger.e(TAG, "应用通知中心媒体封面样式失败", it) }
             }
             return result
         }
@@ -208,7 +213,7 @@ object NotificationMediaCoverStyleHooker {
                         controller,
                         currentStyle()
                     )
-                }.onFailure { HookLogger.e(TAG, "Failed to apply media cover constraints", it) }
+                }.onFailure { HookLogger.e(TAG, "应用通知中心媒体封面约束失败", it) }
             }
             return result
         }
@@ -298,7 +303,7 @@ object NotificationMediaCoverStyleHooker {
         nativeApis[classLoader]?.let { return it }
         return runCatching { NativeApi.create(classLoader) }
             .onSuccess { nativeApis[classLoader] = it }
-            .onFailure { HookLogger.w(TAG, "Native media cover API unavailable: ${it.message}") }
+            .onFailure { HookLogger.w(TAG, "通知中心媒体封面接口不可用: reason=${it.message}") }
             .getOrNull()
     }
 

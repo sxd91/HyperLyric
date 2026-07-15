@@ -64,7 +64,10 @@ object UnlockIslandWhitelist {
                 module.deoptimize(method)
                 val handle = module.hook(method).intercept(ReturnTrueHooker())
                 hookHandles[method] = handle
-                HookLogger.i("UnlockIslandWhitelist", "媒体超级岛下拉小窗白名单: hook ($TARGET_METHOD)")
+            HookLogger.i(
+                "UnlockIslandWhitelist",
+                "超级岛下拉小窗白名单 Hook 已安装: method=$TARGET_METHOD"
+            )
             }
         }.onFailure { e ->
             if (e !is ClassNotFoundException) {
@@ -82,7 +85,7 @@ object UnlockIslandWhitelist {
     private fun unhookAll() {
         hookHandles.values.forEach { it.unhook() }
         hookHandles.clear()
-        HookLogger.i("UnlockIslandWhitelist", "媒体超级岛下拉小窗白名单: unhook")
+            HookLogger.i("UnlockIslandWhitelist", "超级岛下拉小窗白名单 Hook 已移除")
     }
 
     class ReturnTrueHooker : Hooker {

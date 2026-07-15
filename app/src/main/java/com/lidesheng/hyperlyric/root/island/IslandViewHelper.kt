@@ -34,7 +34,7 @@ object IslandViewHelper {
                 }
             }
         } catch (e: Exception) {
-            HookLogger.e("IslandViewHelper", "切换容器可见性失败 ($containerName)", e)
+            HookLogger.e("IslandViewHelper", "切换容器可见性失败: container=$containerName", e)
         }
     }
 
@@ -67,7 +67,7 @@ object IslandViewHelper {
                 }
             }
         } catch (e: Exception) {
-            HookLogger.e("IslandViewHelper", "清除边距失败 ($parentName)", e)
+            HookLogger.e("IslandViewHelper", "清除边距失败: parent=$parentName", e)
         }
     }
 
@@ -125,7 +125,7 @@ object IslandViewHelper {
                 }
             }
         } catch (e: Exception) {
-            HookLogger.e("IslandViewHelper", "恢复原生文本失败 ($parentName)", e)
+            HookLogger.e("IslandViewHelper", "恢复原生文本失败: parent=$parentName", e)
         }
     }
 

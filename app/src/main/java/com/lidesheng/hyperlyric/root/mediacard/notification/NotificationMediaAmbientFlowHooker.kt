@@ -30,7 +30,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 object NotificationMediaAmbientFlowHooker {
-    private const val TAG = "NotificationMediaAmbientFlow"
+    private const val TAG = "NotificationMediaAmbientFlowHooker"
     private const val VIEW_TAG = "hyperlyric.notification_media_ambient_flow"
     private val controllerClassNames = listOf(
         "com.android.systemui.statusbar.notification.mediacontrol.MiuiMediaViewControllerImpl",
@@ -74,7 +74,7 @@ object NotificationMediaAmbientFlowHooker {
         }
         if (controllerClass == null) {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Notification center media controller is unavailable")
+            HookLogger.w(TAG, "通知中心媒体控制器不可用")
             return
         }
         var installed = 0
@@ -93,7 +93,7 @@ object NotificationMediaAmbientFlowHooker {
                         installedNativeUpdates.add(method.name)
                     }
                 }.onFailure { error ->
-                    HookLogger.e(TAG, "Failed to hook ${method.name}", error)
+                    HookLogger.e(TAG, "安装通知中心媒体 Hook 失败: method=${method.name}", error)
                 }
             }
         NotificationMediaBackgroundController.setNativeHooksAvailable(
@@ -101,7 +101,7 @@ object NotificationMediaAmbientFlowHooker {
             installedNativeUpdates.containsAll(NATIVE_BACKGROUND_UPDATE_METHODS)
         )
         if (!installedNativeUpdates.containsAll(NATIVE_BACKGROUND_UPDATE_METHODS)) {
-            HookLogger.w(TAG, "Native media background methods are incomplete; custom background hook skipped")
+                HookLogger.w(TAG, "通知中心原生背景接口不完整，跳过自定义背景 Hook")
         }
 
         runCatching {
@@ -113,14 +113,14 @@ object NotificationMediaAmbientFlowHooker {
                 installed++
             }
         }.onFailure { error ->
-            HookLogger.w(TAG, "Native HyperProgressSeekBar API unavailable: ${error.message}")
+                HookLogger.w(TAG, "通知中心进度条接口不可用: reason=${error.message}")
         }
 
         if (installed == 0) {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "No compatible media controller methods were found")
+            HookLogger.w(TAG, "未找到兼容的通知中心媒体控制方法")
         } else {
-            HookLogger.i(TAG, "Notification media ambient flow hook initialized: methods=$installed")
+            HookLogger.i(TAG, "通知中心媒体流光 Hook 已初始化: methods=$installed")
         }
     }
 
@@ -201,7 +201,7 @@ object NotificationMediaAmbientFlowHooker {
                         prepareCardTheme(controller)
                     }
                 }.onFailure {
-                    HookLogger.e(TAG, "Failed to prepare native media card theme", it)
+                    HookLogger.e(TAG, "准备通知中心媒体卡片主题失败", it)
                 }
             }
             val result = chain.proceed()
@@ -222,7 +222,11 @@ object NotificationMediaAmbientFlowHooker {
                     Action.DETACH -> Unit
                 }
             }.onFailure { error ->
-                HookLogger.e(TAG, "Media ambient flow ${action.name.lowercase()} failed", error)
+                HookLogger.e(
+                    TAG,
+                    "处理通知中心媒体流光失败: action=${action.name.lowercase()}",
+                    error
+                )
             }
             return result
         }
@@ -256,7 +260,7 @@ object NotificationMediaAmbientFlowHooker {
             val snapshot = synchronized(activeControllers) { activeControllers.toList() }
             snapshot.forEach { controller ->
                 runCatching { refreshCardTheme(controller) }
-                    .onFailure { HookLogger.e(TAG, "Failed to refresh media card theme", it) }
+                    .onFailure { HookLogger.e(TAG, "刷新通知中心媒体卡片主题失败", it) }
             }
         }
         if (Looper.myLooper() == Looper.getMainLooper()) refresh.run()
@@ -272,7 +276,7 @@ object NotificationMediaAmbientFlowHooker {
         }
         NotificationMediaBackgroundController.refresh(controllers) { controller ->
             runCatching { refreshCardTheme(controller) }
-                .onFailure { HookLogger.e(TAG, "Failed to restore native media background", it) }
+                .onFailure { HookLogger.e(TAG, "恢复通知中心原生媒体背景失败", it) }
         }
         controllers.forEach(::syncView)
     }
@@ -298,7 +302,7 @@ object NotificationMediaAmbientFlowHooker {
         themeApis[classLoader]?.let { return it }
         return runCatching { CardThemeApi.create(classLoader) }
             .onSuccess { themeApis[classLoader] = it }
-            .onFailure { HookLogger.w(TAG, "Native media card theme API unavailable: ${it.message}") }
+            .onFailure { HookLogger.w(TAG, "通知中心媒体主题接口不可用: reason=${it.message}") }
             .getOrNull()
     }
 
@@ -351,7 +355,7 @@ object NotificationMediaAmbientFlowHooker {
                     ?: return@runCatching null
                 extractPalette(mode, drawable, state.nativeApi)
             }.getOrElse { error ->
-                HookLogger.e(TAG, "Failed to extract media artwork colors", error)
+            HookLogger.e(TAG, "提取通知中心媒体封面颜色失败", error)
                 null
             }
             view.post {
@@ -397,7 +401,7 @@ object NotificationMediaAmbientFlowHooker {
         val layoutParams = createFillParentLayoutParams(mediaBg.layoutParams) ?: run {
             HookLogger.w(
                 TAG,
-                "Unable to create isolated media background constraints; ambient flow view skipped"
+                "无法创建独立媒体背景约束，跳过流光视图"
             )
             stopView(view, nativeApi)
             return null
@@ -517,11 +521,11 @@ object NotificationMediaAmbientFlowHooker {
         return runCatching { NativeMusicBgApi.create(classLoader) }
             .onSuccess { api ->
                 nativeApis[classLoader] = api
-                HookLogger.i(TAG, "Using native MusicBgView renderer")
+            HookLogger.d(TAG, "使用原生 MusicBgView 渲染器")
             }
             .onFailure { error ->
                 nativeUnavailableClassLoaders.add(classLoader)
-                HookLogger.w(TAG, "Native MusicBgView is unavailable: ${error.message}")
+            HookLogger.w(TAG, "原生 MusicBgView 不可用: reason=${error.message}")
             }
             .getOrNull()
     }

@@ -1,18 +1,17 @@
 ﻿package com.lidesheng.hyperlyric.root.aitrans
 
-import android.util.Log
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import com.lidesheng.hyperlyric.common.extensions.json
 
 internal object AITranslationResponseParser {
-    private const val TAG = "HyperLyricAITranslator"
+    private const val TAG = "AITranslationResponseParser"
     private const val MAX_LOG_BODY_LENGTH = 1000
 
     fun parse(content: String, requestIndices: Set<Int>): List<TranslationItem> {
         val jsonPayload = extractJsonFromLlmContent(content) ?: return emptyList()
         val items = decodeTranslationItems(jsonPayload)
         val validItems = normalizeTranslationItems(items, requestIndices)
-        Log.d(TAG, "API call successful, parsed ${items.size} items, accepted ${validItems.size}.")
+        HookLogger.d(TAG, "解析翻译响应完成: parsed=${items.size}, accepted=${validItems.size}")
         return validItems
     }
 
@@ -37,7 +36,10 @@ internal object AITranslationResponseParser {
             }
         }
 
-        HookLogger.e("AITranslationResponseParser", "API: No JSON payload found in response: ${trimForLog(trimmed)}")
+        HookLogger.w(
+            "AITranslationResponseParser",
+            "翻译响应缺少 JSON: body=${trimForLog(trimmed)}"
+        )
         return null
     }
 

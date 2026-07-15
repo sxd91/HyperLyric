@@ -47,7 +47,7 @@ object UnlockFocusWhitelist {
             if (method != null) {
                 module.deoptimize(method)
                 module.hook(method).intercept(PluginLoadHooker())
-                HookLogger.i("UnlockFocusWhitelist", "插件拦截器已就绪 (PluginInstance)")
+            HookLogger.d("UnlockFocusWhitelist", "安装插件加载 Hook: target=PluginInstance.loadPlugin")
             } else {
                 HookLogger.w("UnlockFocusWhitelist", "未找到 PluginInstance.loadPlugin")
             }
@@ -55,7 +55,7 @@ object UnlockFocusWhitelist {
             if (e is ClassNotFoundException) {
                 HookLogger.w("UnlockFocusWhitelist", "$PLUGIN_INSTANCE_CLASS 未找到")
             } else {
-                HookLogger.e("UnlockFocusWhitelist", "拦截 PluginInstance 时发生错误", e)
+            HookLogger.e("UnlockFocusWhitelist", "安装插件加载 Hook 失败", e)
             }
         }
 
@@ -92,11 +92,14 @@ object UnlockFocusWhitelist {
                     val handle = module.hook(method).intercept(ReturnTrueHooker())
                     whitelistHandles.add(handle)
                 }
-                HookLogger.i("UnlockFocusWhitelist", "焦点通知白名单: hook (${methods.joinToString { it.name }})")
+            HookLogger.i(
+                "UnlockFocusWhitelist",
+                "焦点通知白名单 Hook 已安装: methods=${methods.joinToString { it.name }}"
+            )
             }
         }.onFailure { e ->
             if (e !is ClassNotFoundException) {
-                HookLogger.e("UnlockFocusWhitelist", "焦点通知白名单注入失败 ($cl)", e)
+            HookLogger.e("UnlockFocusWhitelist", "注入焦点通知白名单失败: classLoader=$cl", e)
             }
         }
 
@@ -109,11 +112,11 @@ object UnlockFocusWhitelist {
                 module.deoptimize(method)
                 val handle = module.hook(method).intercept(AuthResultHooker())
                 whitelistHandles.add(handle)
-                HookLogger.i("UnlockFocusWhitelist", "焦点通知白名单: hook (authCallback)")
+            HookLogger.i("UnlockFocusWhitelist", "焦点通知授权 Hook 已安装")
             }
         }.onFailure { e ->
             if (e !is ClassNotFoundException) {
-                HookLogger.e("UnlockFocusWhitelist", "焦点通知白名单授权注入失败 ($cl)", e)
+            HookLogger.e("UnlockFocusWhitelist", "注入焦点通知授权失败: classLoader=$cl", e)
             }
         }
     }
@@ -127,7 +130,7 @@ object UnlockFocusWhitelist {
     private fun unhookWhitelist() {
         whitelistHandles.forEach { it.unhook() }
         whitelistHandles.clear()
-        HookLogger.i("UnlockFocusWhitelist", "焦点通知白名单: unhook")
+            HookLogger.i("UnlockFocusWhitelist", "焦点通知白名单 Hook 已移除")
     }
 
     class PluginLoadHooker : Hooker {

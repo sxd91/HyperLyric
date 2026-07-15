@@ -92,7 +92,7 @@ internal object IslandMusicWaveColorHooker {
                 xposedModule.deoptimize(setLottieColorMethod)
                 xposedModule.hook(setLottieColorMethod).intercept(SetLottieColorHook())
             } else {
-                HookLogger.w(TAG, "setLottieColor(Bitmap) not found; native color updates cannot be observed")
+                HookLogger.w(TAG, "音频律动原生取色接口不可用: target=setLottieColor")
             }
 
             val lottieViewField = holderClass.getDeclaredField("lottieView").apply {
@@ -111,19 +111,19 @@ internal object IslandMusicWaveColorHooker {
                     RegisterLottieCallbackHook(lottieViewField, picInfoField)
                 )
             } else {
-                HookLogger.w(TAG, "registerLottieCallback() not found; color refresh may be delayed")
+                HookLogger.w(TAG, "音频律动刷新接口不可用: target=registerLottieCallback")
             }
 
-            HookLogger.i(TAG, "Music wave cover color hook initialized")
+            HookLogger.i(TAG, "音频律动封面色 Hook 已初始化")
         } catch (e: ClassNotFoundException) {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Music wave color is unsupported by this plugin: ${e.message}")
+            HookLogger.w(TAG, "当前插件不支持音频律动封面色: reason=${e.message}")
         } catch (e: NoSuchFieldException) {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Music wave color fields are unavailable: ${e.message}")
+            HookLogger.w(TAG, "音频律动颜色字段不可用: reason=${e.message}")
         } catch (e: Throwable) {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.e(TAG, "Failed to initialize music wave color hook", e)
+            HookLogger.e(TAG, "初始化音频律动封面色 Hook 失败", e)
         }
     }
 
@@ -208,7 +208,7 @@ internal object IslandMusicWaveColorHooker {
                         useGradient
                     )
                 } catch (e: Throwable) {
-                    HookLogger.e(TAG, "Failed to extract music wave colors", e)
+            HookLogger.e(TAG, "提取音频律动颜色失败", e)
                     null
                 } finally {
                     sample.recycle()
@@ -234,7 +234,7 @@ internal object IslandMusicWaveColorHooker {
         }.onFailure { e ->
             sample.recycle()
             if (colorRequest.get() == request && pendingToken == token) pendingToken = null
-            HookLogger.e(TAG, "Failed to schedule music wave color extraction", e)
+            HookLogger.e(TAG, "调度音频律动取色任务失败", e)
         }
     }
 
@@ -341,11 +341,11 @@ internal object IslandMusicWaveColorHooker {
 
                 runOnMain {
                     runCatching { scheduleOptimizedColors(bitmap, sharedPrefs) }.onFailure { e ->
-                        HookLogger.e(TAG, "Failed to apply music wave colors", e)
+            HookLogger.e(TAG, "应用音频律动颜色失败", e)
                     }
                 }
             }.onFailure { e ->
-                HookLogger.e(TAG, "Failed to observe native music wave colors", e)
+            HookLogger.e(TAG, "读取原生音频律动颜色失败", e)
             }
             return result
         }
@@ -371,7 +371,7 @@ internal object IslandMusicWaveColorHooker {
                 }
                 lottieView.invalidate()
             }.onFailure { e ->
-                HookLogger.e(TAG, "Failed to refresh music wave Lottie callback", e)
+            HookLogger.e(TAG, "刷新音频律动动画失败", e)
             }
             return result
         }

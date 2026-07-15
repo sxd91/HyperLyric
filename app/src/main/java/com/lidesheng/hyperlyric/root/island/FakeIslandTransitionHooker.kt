@@ -30,7 +30,7 @@ internal object FakeIslandTransitionHooker {
                     }
                 }, 48L)
             }.onFailure { e ->
-                HookLogger.e(TAG, "tracking 开始后准备冻结 fake view 失败", e)
+                HookLogger.e(TAG, "跟踪开始后冻结过渡视图失败", e)
             }
 
             return result
@@ -52,7 +52,7 @@ internal object FakeIslandTransitionHooker {
                     }
                 }
             }.onFailure { e ->
-                HookLogger.e(TAG, "打开动画开始后准备冻结 fake view 失败", e)
+                HookLogger.e(TAG, "打开动画开始后冻结过渡视图失败", e)
             }
 
             return result
@@ -69,7 +69,7 @@ internal object FakeIslandTransitionHooker {
                     FakeIslandTransitionState.ensureActive(fakeView)
                     IslandTextHookerSupport.prepareFrozenFakeIslandForTransition(fakeView, "before fake.setVisibility(VISIBLE)")
                 }.onFailure { e ->
-                    HookLogger.e(TAG, "fake view 显示前准备冻结视图失败", e)
+                HookLogger.e(TAG, "过渡视图显示前冻结视图失败", e)
                 }
             }
 
@@ -85,7 +85,7 @@ internal object FakeIslandTransitionHooker {
                         }
                     }
                 }.onFailure { e ->
-                    HookLogger.e(TAG, "fake view 显示后准备冻结视图失败", e)
+                HookLogger.e(TAG, "过渡视图显示后冻结视图失败", e)
                 }
             } else if (visibility == View.INVISIBLE) {
                 runCatching {
@@ -94,7 +94,7 @@ internal object FakeIslandTransitionHooker {
                     FakeIslandTransitionState.finish(fakeView)
                     IslandTextHookerSupport.restoreRealIslandAfterFakeTransition(fakeView, "after fake.setVisibility(INVISIBLE)")
                 }.onFailure { e ->
-                    HookLogger.e(TAG, "fake view 隐藏后恢复真实岛失败", e)
+                HookLogger.e(TAG, "过渡视图隐藏后恢复真实岛失败", e)
                 }
             }
 

@@ -1,6 +1,5 @@
 ﻿package com.lidesheng.hyperlyric.root.aitrans
 
-import android.util.Log
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import com.lidesheng.hyperlyric.lyric.model.Song
 import com.lidesheng.hyperlyric.lyric.style.AiTranslationConfigs
@@ -24,7 +23,7 @@ internal class AITranslationScheduler(
     private val maxPending: Int
 ) {
     private companion object {
-        const val TAG = "HyperLyricAITranslator"
+        const val TAG = "AITranslationScheduler"
     }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -41,7 +40,7 @@ internal class AITranslationScheduler(
     ): Deferred<List<TranslationItem>?> {
         synchronized(lock) {
             jobs[key]?.let {
-                Log.d(TAG, "Reusing scheduled AI translation for: ${song.name} [$key]")
+                HookLogger.d(TAG, "复用翻译任务: song=${song.name}, key=$key")
                 return it.deferred
             }
 
@@ -55,7 +54,10 @@ internal class AITranslationScheduler(
             )
             jobs[key] = job
             pending.addLast(job)
-            HookLogger.d("AITranslationScheduler", "已添加 ${job.songName} 到翻译队列（等待中=${pending.size}，运行中=$running）")
+            HookLogger.d(
+                TAG,
+                "加入翻译队列: song=${job.songName}, pending=${pending.size}, running=$running"
+            )
             trimPendingLocked()
             dispatchNextLocked()
             return job.deferred
@@ -69,7 +71,7 @@ internal class AITranslationScheduler(
                 job.state = TranslationJobState.CANCELLED
                 jobs.remove(job.key, job)
                 job.deferred.complete(null)
-                Log.d(TAG, "Cancelled pending AI translation: ${job.songName}")
+                HookLogger.d(TAG, "取消等待中的翻译任务: song=${job.songName}")
             }
         }
     }
@@ -102,7 +104,7 @@ internal class AITranslationScheduler(
             dropped.state = TranslationJobState.CANCELLED
             jobs.remove(dropped.key, dropped)
             dropped.deferred.complete(null)
-            HookLogger.w("AITranslationScheduler", "由于队列已满，取消了 ${dropped.songName} 的翻译请求")
+            HookLogger.w(TAG, "翻译队列已满: action=drop, song=${dropped.songName}")
         }
     }
 
@@ -113,7 +115,10 @@ internal class AITranslationScheduler(
 
             job.state = TranslationJobState.RUNNING
             running++
-            HookLogger.d("AITranslationScheduler", "开始翻译 ${job.songName}（等待中=${pending.size}，运行中=$running）")
+            HookLogger.d(
+                TAG,
+                "启动翻译任务: song=${job.songName}, pending=${pending.size}, running=$running"
+            )
             job.coroutineJob = scope.launch { runJob(job) }
         }
     }
@@ -124,7 +129,7 @@ internal class AITranslationScheduler(
                 OpenAiTranslationClient.request(job.configs, job.song, job.originalLines)
             if (job.state == TranslationJobState.CANCELLED) return
             if (!apiResults.isNullOrEmpty() && job.generation == generation.get()) {
-                HookLogger.d("AITranslationScheduler", " ${job.songName}翻译成功（翻译已缓存）")
+                HookLogger.d(TAG, "翻译任务完成: song=${job.songName}, cached=true")
                 cache.putMemory(job.key, apiResults)
                 cache.saveToDb(job.key, apiResults)
             }
@@ -136,7 +141,7 @@ internal class AITranslationScheduler(
             throw e
         } catch (e: Exception) {
             job.state = TranslationJobState.COMPLETED
-            HookLogger.e("AITranslationScheduler", "翻译[${job.songName}] 出错", e)
+            HookLogger.e(TAG, "翻译任务失败: song=${job.songName}", e)
             job.deferred.complete(null)
         } finally {
             synchronized(lock) {

@@ -4,9 +4,9 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import com.lidesheng.hyperlyric.common.extensions.json
 import com.lidesheng.hyperlyric.common.extensions.toJson
+import com.lidesheng.hyperlyric.root.utils.HookLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +23,7 @@ internal class AITranslationCache(
     private val scope: CoroutineScope
 ) {
     private companion object {
-        const val TAG = "HyperLyricAITranslator"
+        const val TAG = "AITranslationCache"
     }
 
     private val dbMutex = Mutex()
@@ -42,7 +42,7 @@ internal class AITranslationCache(
         if (dbHelper == null) {
             synchronized(this) {
                 if (dbHelper == null) {
-                    Log.d(TAG, "Initializing database...")
+                    HookLogger.d(TAG, "初始化翻译缓存数据库")
                     dbHelper = DatabaseHelper(context.applicationContext)
                 }
             }
@@ -72,7 +72,7 @@ internal class AITranslationCache(
                 } else null
             }
         }.getOrElse {
-            Log.e(TAG, "DB Query error: ${it.message}")
+            HookLogger.e(TAG, "查询翻译缓存失败", it)
             null
         }
     }
@@ -94,7 +94,7 @@ internal class AITranslationCache(
                     SQLiteDatabase.CONFLICT_REPLACE
                 )
             }.onFailure {
-                Log.e(TAG, "Failed to save translation to DB: ${it.message}")
+                HookLogger.e(TAG, "写入翻译缓存失败", it)
             }
         }
     }
@@ -106,10 +106,10 @@ internal class AITranslationCache(
             dbMutex.withLock {
                 runCatching {
                     dbHelper?.writableDatabase?.delete(DatabaseHelper.TABLE_NAME, null, null)
-                    Log.d(TAG, "Database cache cleared.")
+                    HookLogger.d(TAG, "翻译缓存数据库已清空")
                     withContext(Dispatchers.Main) { callback() }
                 }.onFailure {
-                    Log.e(TAG, "Error clearing database: ${it.message}")
+                    HookLogger.e(TAG, "清空翻译缓存数据库失败", it)
                 }
             }
         }
@@ -128,7 +128,7 @@ internal class AITranslationCache(
         }
 
         override fun onCreate(db: SQLiteDatabase) {
-            Log.i(TAG, "Creating translation cache table.")
+            HookLogger.i(TAG, "创建翻译缓存数据表")
             db.execSQL(
                 """
                 CREATE TABLE $TABLE_NAME (
@@ -142,7 +142,7 @@ internal class AITranslationCache(
         }
 
         override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-            Log.w(TAG, "Upgrading database from $oldVersion to $newVersion. All data will be lost.")
+            HookLogger.w(TAG, "升级翻译缓存数据库: old=$oldVersion, new=$newVersion, action=recreate")
             db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
             onCreate(db)
         }

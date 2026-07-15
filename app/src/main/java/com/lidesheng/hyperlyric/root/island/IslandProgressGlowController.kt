@@ -35,7 +35,7 @@ internal object IslandProgressGlowController {
             updateInternal(rootView, packageName, mediaInfo, prefs)
         }.onFailure { e ->
             clear(rootView)
-            HookLogger.e(TAG, "Failed to update island background progress", e)
+            HookLogger.e(TAG, "更新边缘光效进度条失败", e)
         }
     }
 
@@ -54,7 +54,7 @@ internal object IslandProgressGlowController {
                 RootConstants.DEFAULT_HOOK_ISLAND_PROGRESS_GLOW
             )
         ) {
-            logStage(rootView, DiagnosticStage.DISABLED, "Progress glow is disabled")
+            logStage(rootView, DiagnosticStage.DISABLED, "边缘光效进度条已禁用")
             clear(rootView)
             return
         }
@@ -79,8 +79,8 @@ internal object IslandProgressGlowController {
             logStage(
                 rootView,
                 DiagnosticStage.INVALID_MEDIA_PROGRESS,
-                "Media progress unavailable: package=$packageName position=${playbackProgress.position} " +
-                    "duration=${playbackProgress.duration} playing=${playbackProgress.isPlaying}"
+                "媒体进度不可用: package=$packageName, position=${playbackProgress.position}, " +
+                    "duration=${playbackProgress.duration}, playing=${playbackProgress.isPlaying}"
             )
             clear(rootView)
             return
@@ -92,7 +92,7 @@ internal object IslandProgressGlowController {
             logStage(
                 rootView,
                 DiagnosticStage.BACKGROUND_VIEW_NOT_FOUND,
-                "DynamicIslandBackgroundView not found from ${rootView.javaClass.name}"
+                "未找到超级岛背景视图: root=${rootView.javaClass.name}"
             )
             clear(rootView)
             return
@@ -113,11 +113,11 @@ internal object IslandProgressGlowController {
         logStage(
             rootView,
             DiagnosticStage.BACKGROUND_REGISTERED,
-            "Native background registered: package=$packageName " +
-                "progress=${playbackProgress.fraction} " +
-                "progressStart=${colors.progressStart.toUInt().toString(16)} " +
-                "progressEnd=${colors.progressEnd.toUInt().toString(16)} " +
-                "trackColor=${colors.track.toUInt().toString(16)} " +
+            "边缘光效进度已更新: package=$packageName, " +
+                "progress=${playbackProgress.fraction}, " +
+                "progressStart=${colors.progressStart.toUInt().toString(16)}, " +
+                "progressEnd=${colors.progressEnd.toUInt().toString(16)}, " +
+                "trackColor=${colors.track.toUInt().toString(16)}, " +
                 "style=$progressStyle"
         )
     }
@@ -294,7 +294,7 @@ internal object IslandProgressGlowController {
                 true
             }
         }
-        if (changed) HookLogger.i(TAG, message)
+        if (changed) HookLogger.d(TAG, message)
     }
 
     private enum class DiagnosticStage {

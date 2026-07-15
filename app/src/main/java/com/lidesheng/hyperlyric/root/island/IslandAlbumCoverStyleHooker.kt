@@ -54,7 +54,7 @@ internal object IslandAlbumCoverStyleHooker {
                 it.name == "setFixIcon" && it.parameterTypes.size == 1
             } ?: run {
                 hookedClassLoaders.remove(classLoader)
-                HookLogger.w(TAG, "setFixIcon(DynamicIslandData) not found; album cover style is unsupported")
+                HookLogger.w(TAG, "跳过封面样式 Hook: target=setFixIcon")
                 return
             }
             fixMethod.isAccessible = true
@@ -71,16 +71,16 @@ internal object IslandAlbumCoverStyleHooker {
 
             xposedModule.deoptimize(fixMethod)
             xposedModule.hook(fixMethod).intercept(SetFixIconHook(accessor))
-            HookLogger.i(TAG, "Album cover style hook initialized")
+            HookLogger.i(TAG, "超级岛封面样式 Hook 已初始化")
         } catch (e: ClassNotFoundException) {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Album cover style is unsupported by this plugin: ${e.message}")
+            HookLogger.w(TAG, "当前插件不支持超级岛封面样式: reason=${e.message}")
         } catch (e: NoSuchFieldException) {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Album cover fields are unavailable: ${e.message}")
+            HookLogger.w(TAG, "超级岛封面字段不可用: reason=${e.message}")
         } catch (e: Throwable) {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.e(TAG, "Failed to initialize album cover style hook", e)
+            HookLogger.e(TAG, "初始化超级岛封面样式 Hook 失败", e)
         }
     }
 
@@ -93,7 +93,7 @@ internal object IslandAlbumCoverStyleHooker {
             }
             holders.forEach { (holder, data, accessor) ->
                 runCatching { accessor.setFixIconMethod.invoke(holder, data) }
-                    .onFailure { HookLogger.e(TAG, "Failed to refresh album cover style", it) }
+                    .onFailure { HookLogger.e(TAG, "刷新超级岛封面样式失败", it) }
             }
         }
     }
@@ -114,7 +114,7 @@ internal object IslandAlbumCoverStyleHooker {
             try {
                 holders.forEach { (holder, data, accessor) ->
                     runCatching { accessor.setFixIconMethod.invoke(holder, data) }
-                        .onFailure { HookLogger.e(TAG, "Failed to restore native album cover", it) }
+                        .onFailure { HookLogger.e(TAG, "恢复原生超级岛封面失败", it) }
                 }
             } finally {
                 restoringNative.remove()
@@ -167,7 +167,7 @@ internal object IslandAlbumCoverStyleHooker {
         val fixIcon = accessor.fixIconField.get(holder) as? ImageView
         val method = accessor.setAppIconMethod
         if (method == null) {
-            HookLogger.w(TAG, "setAppIcon(DynamicIslandData) not found; keeping the native album cover")
+            HookLogger.w(TAG, "应用图标接口不可用，保留原生封面")
             return
         }
 
@@ -181,7 +181,7 @@ internal object IslandAlbumCoverStyleHooker {
             appIcon?.visibility = View.GONE
             fixIcon?.visibility = View.VISIBLE
             iconContainer?.visibility = View.VISIBLE
-            HookLogger.w(TAG, "Native app icon was unavailable; keeping the album cover")
+            HookLogger.w(TAG, "应用图标不可用，保留原生封面")
         }
     }
 
@@ -232,7 +232,7 @@ internal object IslandAlbumCoverStyleHooker {
                 val holder = chain.thisObject ?: return@runCatching
                 val data = chain.args.firstOrNull() ?: return@runCatching
                 applyStyle(accessor, holder, data)
-            }.onFailure { HookLogger.e(TAG, "Failed to apply album cover style", it) }
+            }.onFailure { HookLogger.e(TAG, "应用超级岛封面样式失败", it) }
             return result
         }
     }

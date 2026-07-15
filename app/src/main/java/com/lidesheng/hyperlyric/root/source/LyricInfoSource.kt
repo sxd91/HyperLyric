@@ -50,9 +50,9 @@ class LyricInfoSource(private val context: Context) : LyricSource {
         try {
             manager.addOnActiveSessionsChangedListener(sessionListener, null)
             onActiveSessionsChanged(manager.getActiveSessions(null))
-            HookLogger.i("LyricInfoSource", "已启动")
+            HookLogger.i("LyricInfoSource", "数据源已启动")
         } catch (e: Exception) {
-            HookLogger.e("LyricInfoSource", "启动失败", e)
+            HookLogger.e("LyricInfoSource", "数据源启动失败", e)
         }
     }
 
@@ -141,14 +141,17 @@ class LyricInfoSource(private val context: Context) : LyricSource {
                 sink?.onSongChanged(song)
                 sink?.onMetadata(title = songName, artist = artist, album = "", publisher = pkg)
                 handlePlaybackState(controller, controller.playbackState)
-                HookLogger.d("LyricInfoSource", "歌词就绪: $songName | ${song.lyrics!!.size}行")
+        HookLogger.d(
+            "LyricInfoSource",
+            "歌词已就绪: song=$songName, lines=${song.lyrics!!.size}"
+        )
             }
         } else if (hasLyrics && pkg == activePkg) {
             // 只清理当前有歌词的包，不影响其他包
             sink?.onStop()
             LyriconDataBridge.clearState()
             clearLyrics()
-            HookLogger.d("LyricInfoSource", "歌词消失: $pkg")
+        HookLogger.d("LyricInfoSource", "歌词已清除: package=$pkg")
         }
     }
 

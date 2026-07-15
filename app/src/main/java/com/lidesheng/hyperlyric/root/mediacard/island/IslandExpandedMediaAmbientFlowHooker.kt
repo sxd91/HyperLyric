@@ -46,7 +46,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 object IslandExpandedMediaAmbientFlowHooker {
-    private const val TAG = "IslandExpandedMediaFlow"
+    private const val TAG = "IslandExpandedMediaAmbientFlowHooker"
     private const val BINDER_CLASS =
         "com.android.systemui.statusbar.notification.mediaisland.MiuiIslandMediaViewBinderImpl"
     private const val MUSIC_BG_VIEW_CLASS = "com.mi.widget.view.MusicBgView"
@@ -98,7 +98,7 @@ object IslandExpandedMediaAmbientFlowHooker {
 
         val api = resolveApi(classLoader) ?: run {
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Native expanded media flow API is unavailable; hook skipped")
+            HookLogger.w(TAG, "跳过展开态媒体流光 Hook: reason=native_api_unavailable")
             return
         }
 
@@ -110,16 +110,20 @@ object IslandExpandedMediaAmbientFlowHooker {
                     ?: error("No hooker for ${method.declaringClass.name}.${method.name}")
                 installedHandles += xposedModule.hook(method).intercept(hooker)
             }.onFailure { error ->
-                HookLogger.e(TAG, "Failed to hook ${method.declaringClass.simpleName}.${method.name}", error)
+                    HookLogger.e(
+                        TAG,
+                        "安装展开态媒体 Hook 失败: method=${method.declaringClass.simpleName}.${method.name}",
+                        error
+                    )
             }
         }
 
         if (installedHandles.size != api.hookMethods.size) {
             installedHandles.forEach(HookHandle::unhook)
             hookedClassLoaders.remove(classLoader)
-            HookLogger.w(TAG, "Expanded media flow hook was not installed completely; all handles removed")
+            HookLogger.w(TAG, "展开态媒体流光 Hook 不完整，已移除全部 Hook")
         } else {
-            HookLogger.i(TAG, "Expanded media flow hook initialized: methods=${installedHandles.size}")
+            HookLogger.i(TAG, "展开态媒体流光 Hook 已初始化: methods=${installedHandles.size}")
         }
     }
 
@@ -244,7 +248,7 @@ object IslandExpandedMediaAmbientFlowHooker {
                     )
                 }
             }.onFailure { error ->
-                HookLogger.e(TAG, "Failed to apply expanded media flow mode", error)
+                HookLogger.e(TAG, "应用展开态媒体流光模式失败", error)
             }
             return result
         }
@@ -283,7 +287,7 @@ object IslandExpandedMediaAmbientFlowHooker {
                     }
                     null
                 }.getOrElse { error ->
-                    HookLogger.e(TAG, "Failed to preserve custom expanded foreground", error)
+                    HookLogger.e(TAG, "保持展开态媒体前景色失败", error)
                     chain.proceed()
                 }
             }
@@ -296,7 +300,7 @@ object IslandExpandedMediaAmbientFlowHooker {
                 applyLightForeground(api, holder, CardColors.from(lightContext))
                 null
             } catch (error: Throwable) {
-                HookLogger.e(TAG, "Failed to apply native light foreground", error)
+                HookLogger.e(TAG, "应用原生浅色前景失败", error)
                 chain.proceed()
             }
         }
@@ -363,7 +367,7 @@ object IslandExpandedMediaAmbientFlowHooker {
                 val contentView = chain.thisObject as? View ?: return@runCatching
                 applyContentViewTheme(contentView)
             }.onFailure { error ->
-                HookLogger.e(TAG, "Failed to restore expanded media mini bar theme", error)
+                HookLogger.e(TAG, "恢复展开态 MiniBar 主题失败", error)
             }
             return result
         }
@@ -374,7 +378,7 @@ object IslandExpandedMediaAmbientFlowHooker {
             val snapshot = synchronized(activeBinders) { activeBinders.toList() }
             snapshot.forEach { binder ->
                 runCatching { applyAppearance(binder, allowCoverColor = true) }
-                    .onFailure { HookLogger.e(TAG, "Failed to refresh expanded media theme", it) }
+                    .onFailure { HookLogger.e(TAG, "刷新展开态媒体主题失败", it) }
             }
         }
         if (Looper.myLooper() == Looper.getMainLooper()) refresh.run()
@@ -387,7 +391,7 @@ object IslandExpandedMediaAmbientFlowHooker {
             snapshot.forEach { binder ->
                 runCatching { applyAppearance(binder, allowCoverColor = true) }
                     .onFailure {
-                        HookLogger.e(TAG, "Failed to refresh expanded media background", it)
+                        HookLogger.e(TAG, "刷新展开态媒体背景失败", it)
                     }
             }
         }
@@ -457,7 +461,7 @@ object IslandExpandedMediaAmbientFlowHooker {
             val snapshot = synchronized(activeBinders) { activeBinders.toList() }
             snapshot.forEach { binder ->
                 runCatching { applyMediaElements(binder) }
-                    .onFailure { HookLogger.e(TAG, "Failed to refresh expanded media elements", it) }
+                    .onFailure { HookLogger.e(TAG, "刷新展开态媒体元素失败", it) }
             }
         }
         if (Looper.myLooper() == Looper.getMainLooper()) refresh.run()
@@ -481,7 +485,7 @@ object IslandExpandedMediaAmbientFlowHooker {
                         runCatching {
                             applyLightExpandedBackground(api, player)
                         }.onFailure {
-                            HookLogger.e(TAG, "Failed to apply deferred live update background", it)
+                    HookLogger.e(TAG, "应用延后的实时通知背景失败", it)
                         }
                     }
                 }
@@ -660,7 +664,7 @@ object IslandExpandedMediaAmbientFlowHooker {
                     MediaAmbientFlowPaletteExtractor.extractCoverMainColor(bitmap)
                         ?.let(api::createPalette)
                 }
-                    .onFailure { HookLogger.e(TAG, "Failed to extract expanded media colors", it) }
+                    .onFailure { HookLogger.e(TAG, "提取展开态媒体颜色失败", it) }
                     .getOrNull()
                 bitmap.recycle()
                 primaryView.post {
@@ -680,7 +684,7 @@ object IslandExpandedMediaAmbientFlowHooker {
             }
         }.onFailure { error ->
             bitmap.recycle()
-            HookLogger.e(TAG, "Failed to schedule expanded media color extraction", error)
+            HookLogger.e(TAG, "调度展开态媒体取色任务失败", error)
         }
     }
 
@@ -789,7 +793,7 @@ object IslandExpandedMediaAmbientFlowHooker {
         classLoader ?: return null
         return runCatching { NativeApi.create(classLoader) }
             .onSuccess { nativeApi = it }
-            .onFailure { HookLogger.w(TAG, "Native expanded media flow API unavailable: ${it.message}") }
+            .onFailure { HookLogger.w(TAG, "展开态媒体原生接口不可用: reason=${it.message}") }
             .getOrNull()
     }
 

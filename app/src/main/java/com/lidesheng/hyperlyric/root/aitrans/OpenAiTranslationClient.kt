@@ -1,6 +1,5 @@
 ﻿package com.lidesheng.hyperlyric.root.aitrans
 
-import android.util.Log
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import com.lidesheng.hyperlyric.common.extensions.json
 import com.lidesheng.hyperlyric.common.extensions.toJson
@@ -16,15 +15,13 @@ import java.net.URL
 
 /** OpenAI-compatible Chat Completions client for lyric translation. */
 internal object OpenAiTranslationClient {
-    private const val TAG = "HyperLyricAITranslator"
-
     suspend fun request(
         configs: AiTranslationConfigs,
         song: Song? = null,
         texts: List<String>
     ): List<TranslationItem>? = withContext(Dispatchers.IO) {
         if (configs.apiKey.isNullOrBlank()) {
-            HookLogger.e("OpenAiTranslationClient", "API: 无法启动：未检测到 API Key，请在设置中配置")
+            HookLogger.w("OpenAiTranslationClient", "跳过翻译请求: reason=missing_api_key")
             return@withContext null
         }
 
@@ -38,7 +35,7 @@ internal object OpenAiTranslationClient {
             }
         }
         if (requestItems.isEmpty()) {
-            Log.d(TAG, "跳过请求：没有需要翻译的行")
+            HookLogger.d("OpenAiTranslationClient", "跳过翻译请求: reason=no_translatable_lines")
             return@withContext emptyList()
         }
 
@@ -61,7 +58,7 @@ internal object OpenAiTranslationClient {
         var connection: HttpURLConnection? = null
         try {
             val url = URL(apiUrl)
-            HookLogger.d("OpenAiTranslationClient", "API 请求：使用模型 ${configs.model}，地址 $apiUrl")
+        HookLogger.d("OpenAiTranslationClient", "发送翻译请求: model=${configs.model}, url=$apiUrl")
 
             connection = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
@@ -81,23 +78,27 @@ internal object OpenAiTranslationClient {
                 val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
                 val responseObj = json.decodeFromString<OpenAiChatResponse>(responseBody)
                 val content = responseObj.choices.firstOrNull()?.message?.content ?: run {
-                    HookLogger.e("OpenAiTranslationClient", "API 错误：AI 返回的内容为空")
+                HookLogger.w("OpenAiTranslationClient", "翻译响应为空")
                     return@withContext null
                 }
-                HookLogger.d("OpenAiTranslationClient", "API 成功：已接收到 AI 返回的数据")
+            HookLogger.d("OpenAiTranslationClient", "翻译请求完成: code=$responseCode")
                 AITranslationResponseParser.parse(content, requestIndices)
             } else {
                 val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "无错误信息"
-                HookLogger.e("OpenAiTranslationClient", "API 错误 (代码 $responseCode)：请检查网络状态或 Key 余额")
+            HookLogger.e("OpenAiTranslationClient", "翻译请求失败: code=$responseCode")
                 null
             }
         } catch (e: CancellationException) {
             throw e
         } catch (_: EOFException) {
-            HookLogger.w("OpenAiTranslationClient", "API 异常：连接被意外关闭 (EOF)")
+            HookLogger.w("OpenAiTranslationClient", "翻译连接意外关闭: reason=EOF")
             null
         } catch (e: Exception) {
-            HookLogger.e("OpenAiTranslationClient", "系统异常：网络请求出错 (${e.javaClass.simpleName})", e)
+            HookLogger.e(
+                "OpenAiTranslationClient",
+                "翻译网络请求异常: type=${e.javaClass.simpleName}",
+                e
+            )
             null
         } finally {
             connection?.disconnect()

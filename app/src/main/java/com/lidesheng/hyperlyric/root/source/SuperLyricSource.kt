@@ -43,10 +43,10 @@ class SuperLyricSource : LyricSource {
 
     override fun isAvailable(): Boolean = try {
         val available = SuperLyricHelper.isAvailable()
-        HookLogger.i(TAG, "isAvailable = $available")
+            HookLogger.d(TAG, "检查数据源可用性: available=$available")
         available
     } catch (e: Exception) {
-        HookLogger.w(TAG, "isAvailable 检查失败: ${e.message}")
+            HookLogger.w(TAG, "检查数据源可用性失败", e)
         false
     }
 
@@ -57,17 +57,17 @@ class SuperLyricSource : LyricSource {
         val available = try {
             SuperLyricHelper.isAvailable()
         } catch (e: Exception) {
-            HookLogger.e(TAG, "SuperLyric 服务不可用（未安装 SuperLyric 模块？）", e)
+            HookLogger.w(TAG, "SuperLyric 服务不可用", e)
             false
         }
         if (!available) {
-            HookLogger.e(TAG, "SuperLyric 服务未就绪，接收端注册跳过")
+            HookLogger.w(TAG, "跳过接收端注册: reason=service_unavailable")
             return
         }
 
         val stub = object : ISuperLyricReceiver.Stub() {
             override fun onLyric(publisher: String, data: SuperLyricData) {
-                HookLogger.d(TAG, "onLyric: publisher=$publisher hasLyric=${data.hasLyric()}")
+        HookLogger.d(TAG, "收到歌词事件: publisher=$publisher, hasLyric=${data.hasLyric()}")
                 try {
                     handleLyric(publisher, data)
                 } catch (e: Exception) {
@@ -89,9 +89,9 @@ class SuperLyricSource : LyricSource {
         try {
             SuperLyricHelper.registerReceiver(stub)
             val registered = SuperLyricHelper.isReceiverRegistered(stub)
-            HookLogger.i(TAG, "接收端注册${if (registered) "成功" else "失败"}")
+            HookLogger.i(TAG, "更新接收端注册状态: registered=$registered")
         } catch (e: Exception) {
-            HookLogger.e(TAG, "接收端注册异常", e)
+            HookLogger.e(TAG, "注册接收端失败", e)
         }
     }
 

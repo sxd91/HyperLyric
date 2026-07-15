@@ -41,16 +41,16 @@ class LyriconSource : LyricSource {
 
     override fun start(sink: LyricSink) {
         if (this.subscriber != null) {
-            HookLogger.w(TAG, "Lyricon 数据源已在运行，跳过重复启动")
+            HookLogger.d(TAG, "跳过重复启动: reason=already_running")
             return
         }
         this.sink = sink
         val application = app ?: run {
-            HookLogger.w(TAG, "Application 未初始化，无法启动")
+            HookLogger.w(TAG, "数据源启动延后: reason=application_unavailable")
             return
         }
         initializeSubscriber(application)
-        HookLogger.i(TAG, "Lyricon 数据源已启动")
+        HookLogger.i(TAG, "数据源已启动")
     }
 
     override fun stop() {
@@ -59,13 +59,13 @@ class LyriconSource : LyricSource {
             subscriber?.unregister()
             subscriber?.destroy()
         } catch (e: Exception) {
-            HookLogger.e(TAG, "清理 Subscriber 时发生错误", e)
+            HookLogger.e(TAG, "清理歌词订阅连接失败", e)
         } finally {
             subscriber = null
             sink?.onStop()
             sink = null
         }
-        HookLogger.i(TAG, "Lyricon 数据源已停止")
+        HookLogger.i(TAG, "数据源已停止")
     }
 
     fun initialize(app: Application) {
@@ -87,19 +87,19 @@ class LyriconSource : LyricSource {
 
     private val connectionListener = object : ConnectionListener {
         override fun onConnected(subscriber: LyriconSubscriber) {
-            HookLogger.i(TAG, "Subscriber 已连接")
+                HookLogger.i(TAG, "订阅连接已建立")
         }
 
         override fun onReconnected(subscriber: LyriconSubscriber) {
-            HookLogger.i(TAG, "Subscriber 已重连")
+                HookLogger.i(TAG, "订阅连接已恢复")
         }
 
         override fun onDisconnected(subscriber: LyriconSubscriber) {
-            HookLogger.w(TAG, "Subscriber 已断开")
+                HookLogger.w(TAG, "订阅连接已断开")
         }
 
         override fun onConnectTimeout(subscriber: LyriconSubscriber) {
-            HookLogger.w(TAG, "Subscriber 连接超时")
+                HookLogger.w(TAG, "订阅连接超时")
         }
     }
 

@@ -29,7 +29,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 internal object NotificationMediaBackgroundController {
-    private const val TAG = "NotificationMediaBackground"
+    private const val TAG = "NotificationMediaBackgroundController"
     private val states = Collections.synchronizedMap(WeakHashMap<Any, ControllerState>())
     private val unavailableLoaders = Collections.synchronizedSet(
         Collections.newSetFromMap(WeakHashMap<ClassLoader, Boolean>())
@@ -108,7 +108,7 @@ internal object NotificationMediaBackgroundController {
                     autoInvert, width, height
                 )
             }.onFailure { error ->
-                HookLogger.e(TAG, "Failed to render media background", error)
+                HookLogger.e(TAG, "渲染通知中心媒体背景失败", error)
             }.getOrNull()
             if (rendered == null) {
                 mediaBg.post {
@@ -312,7 +312,7 @@ internal object NotificationMediaBackgroundController {
         return runCatching { MediaBackgroundRendererPool.get(classLoader) }
             .onFailure { error ->
                 unavailableLoaders.add(classLoader)
-                HookLogger.w(TAG, "Native Monet media background API unavailable: ${error.message}")
+            HookLogger.w(TAG, "通知中心 Monet 背景接口不可用: reason=${error.message}")
             }
             .getOrNull()
     }

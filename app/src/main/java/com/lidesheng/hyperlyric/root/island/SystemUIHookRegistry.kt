@@ -46,7 +46,7 @@ object SystemUIHookRegistry {
                 if (lyricsOnly) "超级岛歌词 Hook 已初始化" else "超级岛 Hook 已初始化"
             )
         } catch (e: ClassNotFoundException) {
-            HookLogger.w("SystemUIHookRegistry", "跳过不支持的超级岛插件: ${e.message}")
+            HookLogger.w("SystemUIHookRegistry", "跳过不支持的超级岛插件: reason=${e.message}")
         } catch (e: Exception) {
             HookLogger.e("SystemUIHookRegistry", "注入超级岛插件失败", e)
         }

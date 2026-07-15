@@ -1,7 +1,6 @@
 ﻿package com.lidesheng.hyperlyric.root.aitrans
 
 import android.content.Context
-import android.util.Log
 import com.lidesheng.hyperlyric.root.utils.HookLogger
 import com.lidesheng.hyperlyric.lyric.model.Song
 import com.lidesheng.hyperlyric.lyric.style.AiTranslationConfigs
@@ -23,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger
  * - [AITranslationApplicator] 负责把有效译文写回 Song。
  */
 object AITranslator {
-    private const val TAG = "HyperLyricAITranslator"
     private const val MAX_CACHE_SIZE = 1000
     private const val MAX_RUNNING_TRANSLATIONS = 3
     private const val MAX_PENDING_TRANSLATIONS = 5
