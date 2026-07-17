@@ -122,7 +122,7 @@ class HookEntry : XposedModule() {
         super.onModuleLoaded(param)
         instance = this
         HookLogger.module = this
-        HookLogger.i("HookEntry", "模块加载完成")
+        HookLogger.i("HookEntry", "模块加载完成，当前应用版本${com.lidesheng.hyperlyric.BuildConfig.VERSION_CODE}-${com.lidesheng.hyperlyric.BuildConfig.VERSION_NAME}")
     }
 
     override fun onHotReloading(param: HotReloadingParam): Boolean {

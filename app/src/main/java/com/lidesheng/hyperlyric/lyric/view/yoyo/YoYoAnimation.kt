@@ -1,4 +1,4 @@
-﻿package com.lidesheng.hyperlyric.lyric.view.yoyo
+package com.lidesheng.hyperlyric.lyric.view.yoyo
 
 import android.animation.Animator
 import android.view.View
@@ -16,6 +16,10 @@ object YoYoAnimation {
         action: (T) -> Unit
     ) {
         cancelAnimation(target)
+        if (target.parent == null || !target.isAttachedToWindow) {
+            action(target)
+            return
+        }
         target.setTag(KEY_ANIM_LOCK, true)
 
         val outHandle = YoYo.with(outConfig.technique)

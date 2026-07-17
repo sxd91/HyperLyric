@@ -219,7 +219,7 @@ internal object IslandSlotContentAssembler {
             }
         }
 
-        val suppressContentAnimation = suppressAnimation || isNextLinePreviewEnabled(prefs, config)
+        val suppressContentAnimation = suppressAnimation || isNextLinePreviewEnabled(prefs, config) || view.parent == null || !view.isAttachedToWindow
         if (config.lyricAnimationEnabled && !suppressContentAnimation) {
             val preset = YoYoPresets.getById(config.lyricAnimationId) ?: YoYoPresets.Default
             when (view) {

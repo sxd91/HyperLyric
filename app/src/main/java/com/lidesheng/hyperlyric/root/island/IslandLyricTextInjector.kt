@@ -367,7 +367,7 @@ internal object IslandLyricTextInjector {
         view.tag = tagValue
 
         if (prefs != null) {
-            IslandSlotContentAssembler.applySlotContent(view, prefs, config, mode, force = true, suppressAnimation = suppressAnimation)
+            IslandSlotContentAssembler.applySlotContent(view, prefs, config, mode, force = true, suppressAnimation = true)
         }
         return view
     }
