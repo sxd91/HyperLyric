@@ -1,4 +1,4 @@
-﻿package com.lidesheng.hyperlyric.root.utils
+package com.lidesheng.hyperlyric.root.utils
 
 import android.content.SharedPreferences
 import android.content.res.Resources
@@ -89,6 +89,7 @@ object LyricStyleHelper {
                 hlColors = darkColors        // 已唱到 -> 封面颜色
             } else {
                 val cached = CoverColorHelper.getCachedColors(useCoverGradient, mediaColorKey)
+                    ?: CoverColorHelper.getCachedColors()
                 if (cached != null) {
                     val darkColors = cached.second
                     val translucentDarkColors = darkColors.map { Color.argb(191, Color.red(it), Color.green(it), Color.blue(it)) }.toIntArray()

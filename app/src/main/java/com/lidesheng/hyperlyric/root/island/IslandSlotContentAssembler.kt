@@ -60,7 +60,8 @@ internal object IslandSlotContentAssembler {
         val albumBitmap = mediaInfo.albumArt.takeUnless {
             lyricTitle != null &&
                 mediaInfo.title.isNotBlank() &&
-                normalizeMediaText(lyricTitle) != normalizeMediaText(mediaInfo.title)
+                !normalizeMediaText(lyricTitle).contains(normalizeMediaText(mediaInfo.title)) &&
+                !normalizeMediaText(mediaInfo.title).contains(normalizeMediaText(lyricTitle))
         }
         val signature = listOf(
             config.styleSignature,
