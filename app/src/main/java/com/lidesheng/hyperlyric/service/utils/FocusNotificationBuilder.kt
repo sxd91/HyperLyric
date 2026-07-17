@@ -17,6 +17,7 @@ class FocusNotificationBuilder(
         paramV2.put("islandFirstFloat", false)
         paramV2.put("updatable", true)
         paramV2.put("reopen", "reopen")
+        paramV2.put("isShowNotification", uiState.focusShowNotification)
 
         // 1. 灵动岛区域 (param_island)
         paramV2.put("param_island", buildParamIsland())

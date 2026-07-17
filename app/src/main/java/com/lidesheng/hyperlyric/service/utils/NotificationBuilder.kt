@@ -45,7 +45,8 @@ object NotificationBuilder {
         val showAlbumArt: Boolean = true,
         val highlightColorEnabled: Boolean = false,
         val songInfoHighlightColorEnabled: Boolean = false,
-        val progressColorEnabled: Boolean = true
+        val progressColorEnabled: Boolean = true,
+        val focusShowNotification: Boolean = true
     )
 
     private var lastAlbumBitmap: Bitmap? = null

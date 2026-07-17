@@ -10,10 +10,14 @@ object ChangelogData {
     fun getChangelog(): List<ChangelogItem> {
         return listOf(
             ChangelogItem(
-                version = "6.5-1935",
+                version = "6.5-1934",
                 title = "",
-                summary = "- 修复超级岛展开态媒体卡片下拉的过渡动画\n" +
-                        "- "
+                summary = "- 新增显示下一句歌词“自动切换翻译”功能\n" +
+                        "- 修复超级岛展开态媒体卡片下拉的过渡动画\n" +
+                        "- 修复刚创建歌词视图触发动画导致NPE的问题\n" +
+                        "- 修复封面色提取失效的问题\n" +
+                        "- 修复暂停后超级岛不缩回及播放时不撑开的问题\n" +
+                        "- 优化了一些日志内容"
             ),
             ChangelogItem(
                 version = "6.4-1934",

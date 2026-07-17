@@ -223,6 +223,15 @@ fun DynamicIslandNotificationPage() {
         )
     }
 
+    var focusShowNotificationEnabled by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                ServiceConstants.KEY_NOTIFICATION_FOCUS_SHOW,
+                ServiceConstants.DEFAULT_NOTIFICATION_FOCUS_SHOW
+            )
+        )
+    }
+
     var normalNotificationTitleStyle by remember {
         mutableIntStateOf(
             prefs.getInt(
@@ -416,6 +425,11 @@ fun DynamicIslandNotificationPage() {
                             onFocusNotificationTypeChange = {
                                 focusNotificationType = it
                                 prefs.edit { putInt(ServiceConstants.KEY_NOTIFICATION_FOCUS_STYLE, it) }
+                            },
+                            focusShowNotificationEnabled = focusShowNotificationEnabled,
+                            onFocusShowNotificationToggle = { checked ->
+                                focusShowNotificationEnabled = checked
+                                prefs.edit { putBoolean(ServiceConstants.KEY_NOTIFICATION_FOCUS_SHOW, checked) }
                             },
                             normalNotificationTitleStyle = normalNotificationTitleStyle,
                             onNormalNotificationTitleStyleChange = {

@@ -58,6 +58,8 @@ fun LazyListScope.configSections(
     onShowAlbumArtToggle: (Boolean) -> Unit,
     focusNotificationType: Int,
     onFocusNotificationTypeChange: (Int) -> Unit,
+    focusShowNotificationEnabled: Boolean,
+    onFocusShowNotificationToggle: (Boolean) -> Unit,
     normalNotificationTitleStyle: Int,
     onNormalNotificationTitleStyleChange: (Int) -> Unit,
     onAutostartClick: () -> Unit,
@@ -233,6 +235,16 @@ fun LazyListScope.configSections(
             modifier = Modifier.padding(horizontal = 12.dp)
                 .padding(bottom = 12.dp).fillMaxWidth()
         ) {
+            AnimatedVisibility(visible = notificationType == 1) {
+                Column {
+                    SwitchPreference(
+                        title = stringResource(R.string.title_focus_show_notification),
+                        summary = stringResource(R.string.summary_focus_show_notification),
+                        checked = focusShowNotificationEnabled,
+                        onCheckedChange = onFocusShowNotificationToggle
+                    )
+                }
+            }
             val clickOptions = remember {
                 listOf(R.string.option_click_pause, R.string.option_click_open_app, R.string.option_click_open_media)
             }.map { stringResource(id = it) }

@@ -136,7 +136,8 @@ class NotificationPresenter(
             showAlbumArt = sp.getBoolean(ServiceConstants.KEY_NOTIFICATION_ALBUM, ServiceConstants.DEFAULT_NOTIFICATION_ALBUM),
             highlightColorEnabled = sp.getBoolean(ServiceConstants.KEY_NOTIFICATION_HIGHLIGHT_COLOR, ServiceConstants.DEFAULT_NOTIFICATION_HIGHLIGHT_COLOR),
             songInfoHighlightColorEnabled = sp.getBoolean(ServiceConstants.KEY_NOTIFICATION_SONG_INFO_HIGHLIGHT_COLOR, ServiceConstants.DEFAULT_NOTIFICATION_SONG_INFO_HIGHLIGHT_COLOR),
-            progressColorEnabled = sp.getBoolean(ServiceConstants.KEY_NOTIFICATION_PROGRESS_COLOR, ServiceConstants.DEFAULT_NOTIFICATION_PROGRESS_COLOR)
+            progressColorEnabled = sp.getBoolean(ServiceConstants.KEY_NOTIFICATION_PROGRESS_COLOR, ServiceConstants.DEFAULT_NOTIFICATION_PROGRESS_COLOR),
+            focusShowNotification = sp.getBoolean(ServiceConstants.KEY_NOTIFICATION_FOCUS_SHOW, ServiceConstants.DEFAULT_NOTIFICATION_FOCUS_SHOW)
         )
 
         val isScreenOn = (context.getSystemService(Context.POWER_SERVICE) as? PowerManager)?.isInteractive == true
@@ -180,6 +181,7 @@ class NotificationPresenter(
 
     private fun NotificationBuilder.UiState.isProgressOnlyChange(other: NotificationBuilder.UiState): Boolean {
         return progress != other.progress &&
+                focusShowNotification == other.focusShowNotification &&
                 title == other.title &&
                 islandTitleLeft == other.islandTitleLeft &&
                 notificationTitleLeft == other.notificationTitleLeft &&

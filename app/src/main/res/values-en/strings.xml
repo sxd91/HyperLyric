@@ -168,6 +168,8 @@
     <string name="title_limit_width_desc">Text exceeding limit will be discarded</string>
     <string name="summary_limit_width">Reference: One Chinese character is about 50</string>
     <string name="title_notification_settings">Notification Settings</string>
+    <string name="title_focus_show_notification">Enable Notification Spotlight</string>
+    <string name="summary_focus_show_notification">Only show Super Island and hide Spotlight from notification center when disabled</string>
     <string name="title_notification_click">Notification Click</string>
     <string name="option_click_pause">Pause Music (Default)</string>
     <string name="option_click_open_app">Open HyperLyric</string>

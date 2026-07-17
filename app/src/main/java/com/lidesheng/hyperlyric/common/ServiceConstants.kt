@@ -23,6 +23,7 @@ object ServiceConstants {
     const val KEY_ONLINE_LYRIC_ENABLED = "key_online_lyric_enabled"
     const val KEY_BYPASS_FOCUS_NOTIFICATION_LIMIT = "key_bypass_focus_notification_limit"
     const val KEY_SERVICE_LYRIC_SOURCE = "key_service_lyric_source"
+    const val KEY_NOTIFICATION_FOCUS_SHOW = "key_notification_focus_show"
 
     // ================= LYRIC SOURCE TYPES =================
     const val LYRIC_SOURCE_AUTO = 0
@@ -34,6 +35,7 @@ object ServiceConstants {
     // ================= DEFAULTS =================
     const val DEFAULT_NOTIFICATION_TYPE = 0
     const val DEFAULT_NOTIFICATION_FOCUS_STYLE = 0
+    const val DEFAULT_NOTIFICATION_FOCUS_SHOW = true
     const val DEFAULT_ISLAND_LEFT_ICON = 0 // 0=music note, 1=rounded album, 2=circular album, 3=none
     const val DEFAULT_NOTIFICATION_TITLE_STYLE = 4
     const val DEFAULT_NOTIFICATION_CLICK_ACTION = 0
