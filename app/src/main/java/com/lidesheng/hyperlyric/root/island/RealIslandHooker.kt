@@ -19,8 +19,8 @@ internal object RealIslandHooker {
                 if (IslandProbeUtils.isSuperIslandEnabled()) {
                     mediaInfo = IslandProbeUtils.extractMediaIslandInfo(data)
                     if (mediaInfo?.let(IslandTextHookerSupport::isCurrentLyricIsland) == true) {
-                        if (!IslandTextHookerSupport.shouldRenderInjectedIsland(contentView, mediaInfo)) {
-                            IslandTextHookerSupport.hardClearInjectedIsland(contentView)
+                        if (!IslandTextHookerSupport.shouldRenderInjectedIsland()) {
+                            IslandTextHookerSupport.clearInjectedIsland(contentView)
                             return@runCatching
                         }
                         if (IslandLyricTextInjector.restoreExistingSlotsLightweight(contentView)) {
@@ -57,8 +57,8 @@ internal object RealIslandHooker {
                 }
 
                 IslandViewRegistry.register(contentView, info.packageName)
-                if (!IslandTextHookerSupport.shouldRenderInjectedIsland(contentView, info)) {
-                    IslandTextHookerSupport.hardClearInjectedIsland(contentView)
+                if (!IslandTextHookerSupport.shouldRenderInjectedIsland()) {
+                    IslandTextHookerSupport.clearInjectedIsland(contentView)
                     return@runCatching
                 }
 
@@ -92,8 +92,8 @@ internal object RealIslandHooker {
                     IslandTextHookerSupport.clearOnlyWhenPackageIsDefinitelyDifferent(contentView, mediaInfo)
                     return@runCatching
                 }
-                if (!IslandTextHookerSupport.shouldRenderInjectedIsland(contentView, mediaInfo)) {
-                    IslandTextHookerSupport.hardClearInjectedIsland(contentView)
+                if (!IslandTextHookerSupport.shouldRenderInjectedIsland()) {
+                    IslandTextHookerSupport.clearInjectedIsland(contentView)
                     return@runCatching
                 }
 

@@ -26,7 +26,7 @@ internal object IslandTextHookerSupport {
         if (!isCurrentLyricIsland(mediaInfo)) {
             return
         }
-        if (!shouldRenderInjectedIsland(fakeView, mediaInfo)) {
+        if (!shouldRenderInjectedIsland()) {
             IslandHostFacade.clearInjectedViews(fakeView)
             return
         }
@@ -46,7 +46,7 @@ internal object IslandTextHookerSupport {
         if (!IslandProbeUtils.isSuperIslandEnabled()) return
         val mediaInfo = extractMediaInfoFromContentOrReal(fakeView) ?: return
         if (!isCurrentLyricIsland(mediaInfo)) return
-        if (!shouldRenderInjectedIsland(fakeView, mediaInfo)) return
+        if (!shouldRenderInjectedIsland()) return
 
         val realView = callNoArgMethodResult(fakeView, "getRealView") as? ViewGroup ?: return
         IslandViewRegistry.register(realView, mediaInfo.packageName)
@@ -74,22 +74,22 @@ internal object IslandTextHookerSupport {
         hardClearInjectedIsland(viewGroup)
     }
 
-    fun shouldRenderInjectedIsland(
-        viewGroup: ViewGroup?,
-        mediaInfo: IslandProbeUtils.MediaIslandInfo?
-    ): Boolean {
-        if (viewGroup == null || mediaInfo == null) {
-            return BaseIslandRenderer.shouldRenderInjectedIsland()
-        }
-        return BaseIslandRenderer.shouldRenderInjectedIsland(viewGroup.context, mediaInfo.packageName)
+    fun shouldRenderInjectedIsland(): Boolean {
+        return BaseIslandRenderer.shouldRenderInjectedIsland()
     }
 
-    fun hardClearInjectedIsland(viewGroup: ViewGroup, suppressRelayout: Boolean = false) {
-        IslandViewRegistry.unregister(viewGroup)
+    /** Clears the current lyric presentation but keeps the real island registered for resume. */
+    fun clearInjectedIsland(viewGroup: ViewGroup, suppressRelayout: Boolean = false) {
         IslandHostFacade.clearInjectedViews(viewGroup)
         if (!suppressRelayout) {
             IslandHostFacade.triggerSystemRelayout(viewGroup)
         }
+    }
+
+    /** Clears an island that is no longer a valid target and removes it from the registry. */
+    fun hardClearInjectedIsland(viewGroup: ViewGroup, suppressRelayout: Boolean = false) {
+        IslandViewRegistry.unregister(viewGroup)
+        clearInjectedIsland(viewGroup, suppressRelayout)
     }
 
     fun restoreAdapterModule(adapter: Any?, moduleType: String?, source: String) {

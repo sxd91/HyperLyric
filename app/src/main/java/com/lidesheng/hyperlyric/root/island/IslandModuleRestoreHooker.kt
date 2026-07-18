@@ -21,7 +21,7 @@ internal object IslandModuleRestoreHooker {
                 val holderRoot = IslandProbeUtils.getHolderRootView(
                     IslandProbeUtils.getHolder(chain.thisObject, moduleType)
                 )
-                if (!IslandTextHookerSupport.shouldRenderInjectedIsland(holderRoot, mediaInfo)) {
+                if (!IslandTextHookerSupport.shouldRenderInjectedIsland()) {
                     holderRoot?.let { IslandHostFacade.clearInjectedViews(it) }
                     return@runCatching
                 }
@@ -50,7 +50,7 @@ internal object IslandModuleRestoreHooker {
                 val holderRoot = IslandProbeUtils.getHolderRootView(
                     IslandProbeUtils.getHolder(adapter, moduleType)
                 )
-                if (!IslandTextHookerSupport.shouldRenderInjectedIsland(holderRoot, mediaInfo)) {
+                if (!IslandTextHookerSupport.shouldRenderInjectedIsland()) {
                     holderRoot?.let { IslandHostFacade.clearInjectedViews(it) }
                     return@runCatching
                 }

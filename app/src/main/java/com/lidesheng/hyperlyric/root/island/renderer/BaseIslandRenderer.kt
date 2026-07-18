@@ -1,6 +1,5 @@
 package com.lidesheng.hyperlyric.root.island.renderer
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -32,6 +31,11 @@ object BaseIslandRenderer : IslandRenderer {
     @Volatile
     private var clearedByPause = false
 
+    /**
+     * Source lifecycle events are the authority for lyric rendering state.
+     * Hook paths must not re-query MediaSession here: during a lyric refresh the source can
+     * already be stopped while the player session still reports STATE_PLAYING.
+     */
     fun shouldRenderInjectedIsland(): Boolean {
         val prefs = HookEntry.instance?.prefs ?: return false
         if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) {
@@ -42,21 +46,6 @@ object BaseIslandRenderer : IslandRenderer {
             RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE
         )
         return playbackActive || behavior != 0
-    }
-
-    fun shouldRenderInjectedIsland(context: Context, packageName: String): Boolean {
-        val prefs = HookEntry.instance?.prefs ?: return false
-        if (!prefs.getBoolean(RootConstants.KEY_HOOK_ENABLE_SUPER_ISLAND, RootConstants.DEFAULT_HOOK_ENABLE_SUPER_ISLAND)) {
-            return false
-        }
-        val behavior = prefs.getInt(
-            RootConstants.KEY_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE,
-            RootConstants.DEFAULT_HOOK_ISLAND_BEHAVIOR_AFTER_PAUSE
-        )
-        if (behavior != 0) {
-            return true
-        }
-        return MediaMetadataHelper.isPackagePlaying(context, packageName)
     }
 
     override fun refreshActiveIsland() {
@@ -227,6 +216,8 @@ object BaseIslandRenderer : IslandRenderer {
 
     override fun clearAllViews() {
         mainHandler.removeCallbacks(refreshRunnable)
+        playbackActive = false
+        clearedByPause = true
         IslandViewRegistry.snapshotAttached()
             .forEach { (cv, _) ->
                 cv.post {
